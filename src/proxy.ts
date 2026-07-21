@@ -33,7 +33,8 @@ function buildCspHeader(nonce: string): string {
     "script-src": [
       "'self'",
       `'nonce-${nonce}'`,
-      "'strict-dynamic'",
+      "'unsafe-inline'",
+      "'unsafe-eval'",
       "https://*.payos.vn",
       "https://us.i.posthog.com",
       "https://eu.i.posthog.com",
