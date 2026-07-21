@@ -19,9 +19,6 @@ import { Reveal } from "@/components/animations/Reveal";
 import { TiltCard } from "@/components/animations/TiltCard";
 import { ServiceCalculatorSlider } from "@/components/shared/service-calculator-slider";
 
-
-export const dynamic = "force-dynamic";
-
 interface PriceOption {
   id: string;
   name: string;

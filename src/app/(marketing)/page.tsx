@@ -11,8 +11,6 @@ import { LogoCloud } from "@/components/marketing/LogoCloud";
 import { ScrollProgressBar } from "@/components/animations/ScrollProgressBar";
 import { StatBar, type StatItem } from "@/components/marketing/StatBar";
 
-export const dynamic = "force-dynamic";
-
 // ===== STATIC CONTENT =====
 
 const HERO_BADGE = "Dịch vụ Game uy tín #1 Việt Nam";
