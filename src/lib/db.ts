@@ -4,16 +4,32 @@ import { PrismaPg } from "@prisma/adapter-pg";
 
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
-const connectionString = process.env.DATABASE_URL || "postgresql://postgres:postgres@localhost:5432/postgres";
-const pool = new Pool({ connectionString });
+function getDbInstance() {
+  const connectionString =
+    process.env.DATABASE_URL ||
+    "postgresql://postgres:postgres@localhost:5432/postgres";
 
-pool.on("error", (err) => {
-  console.error("[pg-pool] Suppressed idle client error:", err.message);
-});
+  const isCloudDb =
+    connectionString.includes("supabase.co") ||
+    connectionString.includes("neon.tech") ||
+    connectionString.includes("pooler") ||
+    connectionString.includes("sslmode=");
 
-const adapter = new PrismaPg(pool);
+  const pool = new Pool({
+    connectionString,
+    max: process.env.NODE_ENV === "production" ? 10 : 5,
+    ssl: isCloudDb ? { rejectUnauthorized: false } : undefined,
+  });
 
-export const db = globalForPrisma.prisma || new PrismaClient({ adapter });
+  pool.on("error", (err) => {
+    console.error("[pg-pool] Suppressed idle client error:", err.message);
+  });
+
+  const adapter = new PrismaPg(pool);
+  return new PrismaClient({ adapter });
+}
+
+export const db = globalForPrisma.prisma || getDbInstance();
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = db;
 export default db;
