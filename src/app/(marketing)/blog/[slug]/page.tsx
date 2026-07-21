@@ -23,37 +23,46 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const article = await db.article.findUnique({
-    where: { slug },
-  });
+  try {
+    const article = await db.article.findUnique({
+      where: { slug },
+    });
 
-  if (!article) {
-    return { title: "Bài viết không tồn tại" };
-  }
+    if (!article) {
+      return { title: "Bài viết không tồn tại" };
+    }
 
-  return {
-    title: `${article.title} | Genshin77 Blog`,
-    description: article.excerpt || article.title,
-    openGraph: {
-      title: article.title,
+    return {
+      title: `${article.title} | Genshin77 Blog`,
       description: article.excerpt || article.title,
-      type: "article",
-      publishedTime: article.publishedAt?.toISOString(),
-      images: article.coverImage ? [{ url: article.coverImage }] : [],
-    },
-  };
+      openGraph: {
+        title: article.title,
+        description: article.excerpt || article.title,
+        type: "article",
+        publishedTime: article.publishedAt?.toISOString(),
+        images: article.coverImage ? [{ url: article.coverImage }] : [],
+      },
+    };
+  } catch {
+    return { title: "Blog | Genshin77" };
+  }
 }
 
 export default async function BlogDetailPage({ params }: Props) {
   const { slug } = await params;
-  const article = await db.article.findUnique({
-    where: { slug },
-    include: {
-      author: {
-        select: { name: true, email: true },
+  let article: any = null;
+  try {
+    article = await db.article.findUnique({
+      where: { slug },
+      include: {
+        author: {
+          select: { name: true, email: true },
+        },
       },
-    },
-  });
+    });
+  } catch (error) {
+    console.error("[BlogDetailPage] DB error:", error);
+  }
 
   if (!article || article.status !== "PUBLISHED") {
     notFound();
@@ -88,7 +97,7 @@ export default async function BlogDetailPage({ params }: Props) {
         <section className="mb-10 text-center sm:text-left">
           <Reveal>
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-4">
-              {article.tags.map((tag) => (
+              {article.tags.map((tag: string) => (
                 <Badge
                   key={tag}
                   variant="secondary"

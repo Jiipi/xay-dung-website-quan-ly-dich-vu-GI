@@ -37,15 +37,26 @@ export const metadata: Metadata = {
 };
 
 export default async function FAQPage() {
-  const categories = await db.faqCategory.findMany({
-    orderBy: { order: "asc" },
-    include: {
-      items: {
-        where: { isActive: true },
-        orderBy: { order: "asc" },
+  let categories: Array<{
+    id: string;
+    name: string;
+    order: number;
+    items: Array<{ id: string; question: string; answer: string; order: number }>;
+  }> = [];
+
+  try {
+    categories = await db.faqCategory.findMany({
+      orderBy: { order: "asc" },
+      include: {
+        items: {
+          where: { isActive: true },
+          orderBy: { order: "asc" },
+        },
       },
-    },
-  });
+    });
+  } catch (error) {
+    console.error("[FAQPage] DB query error:", error);
+  }
 
   const activeCategories = categories.filter((c) => c.items.length > 0);
   const totalItems = activeCategories.reduce(

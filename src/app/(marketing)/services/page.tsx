@@ -42,33 +42,42 @@ export default async function ServicesPage({
 }) {
   const params = await searchParams;
 
-  const [categories, services] = await Promise.all([
-    db.serviceCategory.findMany({
-      orderBy: { name: "asc" },
-      select: { id: true, name: true, icon: true },
-    }),
-    db.service.findMany({
-      where: { isActive: true },
-      orderBy: [{ isPopular: "desc" }, { name: "asc" }],
-      include: {
-        category: { select: { id: true, name: true, icon: true } },
-        priceOptions: {
-          orderBy: { price: "asc" },
-          select: { id: true, name: true, price: true, originalPrice: true },
-        },
-        reviews: {
-          where: { status: "APPROVED" },
-          select: { rating: true },
-        },
-        _count: {
-          select: {
-            reviews: { where: { status: "APPROVED" } },
-            orders: true,
+  let categories: Array<{ id: string; name: string; icon: string }> = [];
+  let services: any[] = [];
+
+  try {
+    const [fetchedCats, fetchedSvcs] = await Promise.all([
+      db.serviceCategory.findMany({
+        orderBy: { name: "asc" },
+        select: { id: true, name: true, icon: true },
+      }),
+      db.service.findMany({
+        where: { isActive: true },
+        orderBy: [{ isPopular: "desc" }, { name: "asc" }],
+        include: {
+          category: { select: { id: true, name: true, icon: true } },
+          priceOptions: {
+            orderBy: { price: "asc" },
+            select: { id: true, name: true, price: true, originalPrice: true },
+          },
+          reviews: {
+            where: { status: "APPROVED" },
+            select: { rating: true },
+          },
+          _count: {
+            select: {
+              reviews: { where: { status: "APPROVED" } },
+              orders: true,
+            },
           },
         },
-      },
-    }),
-  ]);
+      }),
+    ]);
+    categories = fetchedCats.map((c) => ({ ...c, icon: c.icon || "Sparkles" }));
+    services = fetchedSvcs;
+  } catch (error) {
+    console.error("[ServicesPage] DB query error:", error);
+  }
 
   // Chuẩn hoá dữ liệu truyền cho client component
   const initialFilters = {
@@ -84,11 +93,11 @@ export default async function ServicesPage({
     const orderCount = s._count.orders;
     const avgRating =
       reviewCount > 0
-        ? s.reviews.reduce((sum, r) => sum + r.rating, 0) / reviewCount
+        ? s.reviews.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0) / reviewCount
         : 0;
     const minPrice =
       s.priceOptions.length > 0
-        ? Math.min(...s.priceOptions.map((p) => p.price))
+        ? Math.min(...s.priceOptions.map((p: { price: number }) => p.price))
         : 0;
 
     return {

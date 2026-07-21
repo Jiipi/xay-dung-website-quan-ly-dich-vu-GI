@@ -129,16 +129,17 @@ export const metadata: Metadata = {
 // ===== SERVER SECTIONS (data-driven) =====
 
 async function TestimonialsSection() {
-  const reviews = await db.review.findMany({
-    where: { status: "APPROVED" },
-    include: { user: true, service: true },
-    orderBy: { createdAt: "desc" },
-    take: 6,
-  });
+  try {
+    const reviews = await db.review.findMany({
+      where: { status: "APPROVED" },
+      include: { user: true, service: true },
+      orderBy: { createdAt: "desc" },
+      take: 6,
+    });
 
-  if (reviews.length === 0) return null;
+    if (reviews.length === 0) return null;
 
-  return (
+    return (
     <section className="py-24">
       <div className="mx-auto max-w-6xl px-4">
         <div className="mb-16 text-center">
@@ -197,7 +198,10 @@ async function TestimonialsSection() {
         </div>
       </div>
     </section>
-  );
+    );
+  } catch {
+    return null;
+  }
 }
 
 // ===== PAGE =====

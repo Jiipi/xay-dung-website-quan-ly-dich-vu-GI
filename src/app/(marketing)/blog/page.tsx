@@ -82,32 +82,43 @@ export default async function BlogPage({
 
   const where = { status: "PUBLISHED" as const };
 
-  const [total, articles, contentRows] = await Promise.all([
-    db.article.count({ where }),
-    db.article.findMany({
-      where,
-      orderBy: { publishedAt: "desc" },
-      skip: (currentPage - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
-      select: {
-        id: true,
-        slug: true,
-        title: true,
-        excerpt: true,
-        coverImage: true,
-        tags: true,
-        publishedAt: true,
-        author: { select: { name: true } },
-      },
-    }),
-    db.article.findMany({
-      where,
-      orderBy: { publishedAt: "desc" },
-      skip: (currentPage - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
-      select: { id: true, content: true },
-    }),
-  ]);
+  let total = 0;
+  let articles: any[] = [];
+  let contentRows: any[] = [];
+
+  try {
+    const [t, a, c] = await Promise.all([
+      db.article.count({ where }),
+      db.article.findMany({
+        where,
+        orderBy: { publishedAt: "desc" },
+        skip: (currentPage - 1) * PAGE_SIZE,
+        take: PAGE_SIZE,
+        select: {
+          id: true,
+          slug: true,
+          title: true,
+          excerpt: true,
+          coverImage: true,
+          tags: true,
+          publishedAt: true,
+          author: { select: { name: true } },
+        },
+      }),
+      db.article.findMany({
+        where,
+        orderBy: { publishedAt: "desc" },
+        skip: (currentPage - 1) * PAGE_SIZE,
+        take: PAGE_SIZE,
+        select: { id: true, content: true },
+      }),
+    ]);
+    total = t;
+    articles = a;
+    contentRows = c;
+  } catch (error) {
+    console.error("[BlogPage] DB error:", error);
+  }
 
   // Map id -> reading time để tránh N+1 query khi render.
   const readingTimeMap = new Map<string, number>(

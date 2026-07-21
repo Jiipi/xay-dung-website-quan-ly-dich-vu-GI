@@ -12,31 +12,40 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
-  const service = await db.service.findUnique({
-    where: { id },
-  });
+  try {
+    const service = await db.service.findUnique({
+      where: { id },
+    });
 
-  if (!service) {
-    return { title: "Dịch vụ không tồn tại" };
+    if (!service) {
+      return { title: "Dịch vụ không tồn tại" };
+    }
+
+    return {
+      title: `${service.name} | Genshin77`,
+      description: service.description,
+    };
+  } catch {
+    return { title: "Chi tiết dịch vụ | Genshin77" };
   }
-
-  return {
-    title: `${service.name} | Genshin77`,
-    description: service.description,
-  };
 }
 
 export default async function ServiceDetailPage({ params }: Props) {
   const { id } = await params;
-  const service = await db.service.findUnique({
-    where: { id },
-    include: {
-      category: true,
-      priceOptions: {
-        orderBy: { price: "asc" },
+  let service: any = null;
+  try {
+    service = await db.service.findUnique({
+      where: { id },
+      include: {
+        category: true,
+        priceOptions: {
+          orderBy: { price: "asc" },
+        },
       },
-    },
-  });
+    });
+  } catch (error) {
+    console.error("[ServiceDetailPage] DB error:", error);
+  }
 
   if (!service || !service.isActive) {
     notFound();
