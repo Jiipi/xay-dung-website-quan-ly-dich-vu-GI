@@ -1,0 +1,9 @@
+https://github.com/microsoft/playwright.git
+https://github.com/storybookjs/storybook
+https://github.com/garris/BackstopJS
+https://github.com/dequelabs/axe-core
+https://github.com/testing-library/react-testing-library
+https://github.com/eslint/eslint
+https://github.com/vitest-dev/vitest.git
+https://github.com/pytest-dev/pytest.git
+https://github.com/getsentry/sentry.git

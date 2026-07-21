@@ -1,0 +1,10 @@
+https://clerk.com/docs/components/user/user-profile
+https://authjs.dev/getting-started/session-management/get-session
+https://supabase.com/docs/guides/auth/managing-user-data
+https://ui.shadcn.com/blocks
+https://github.com/satnaing/shadcn-admin
+https://www.radix-ui.com/primitives/docs/components/avatar
+https://github.com/react-hook-form/react-hook-form
+https://github.com/colinhacks/zod
+https://github.com/transloadit/uppy
+https://www.keycloak.org/docs/latest/server_admin/

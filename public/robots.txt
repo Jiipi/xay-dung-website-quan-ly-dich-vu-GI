@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /booster
+Disallow: /dashboard
+Disallow: /order
+Disallow: /api/
+
+Sitemap: https://genshin77.vn/sitemap.xml

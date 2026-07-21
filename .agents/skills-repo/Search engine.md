@@ -1,0 +1,1 @@
+https://github.com/typesense/typesense.git

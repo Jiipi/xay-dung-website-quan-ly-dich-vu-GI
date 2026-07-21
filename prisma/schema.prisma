@@ -1,0 +1,466 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ===== 1. USER & ROLE =====
+enum Role {
+  CUSTOMER
+  BOOSTER
+  ADMIN
+}
+
+model User {
+  id                 String              @id @default(uuid())
+  name               String
+  email              String              @unique
+  password           String              // Hashed password
+  role               Role                @default(CUSTOMER)
+  isActive           Boolean             @default(true)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  orders             Order[]             @relation("CustomerOrders")
+  boosterOrders      Order[]             @relation("BoosterOrders")
+  transactions       WalletTransaction[]
+  paymentIntents     PaymentIntent[]
+  auditLogs          AdminAuditLog[]
+  reviews            Review[]
+  notifications      Notification[]
+  userConversations  Conversation[]      @relation("UserConversations")
+  adminConversations Conversation[]      @relation("AdminConversations")
+  refundRequests     RefundRequest[]
+  couponRedemptions  CouponRedemption[]
+  articles           Article[]
+  favorites          Favorite[]
+
+  @@map("users")
+}
+
+// ===== 2. SERVICE CATALOG =====
+model ServiceCategory {
+  id        String    @id
+  name      String
+  icon      String
+  services  Service[]
+
+  @@map("service_categories")
+}
+
+model Service {
+  id             String                @id @default(uuid())
+  name           String
+  description    String
+  categoryId     String
+  category       ServiceCategory       @relation(fields: [categoryId], references: [id])
+  difficulty     String?               // Dễ, Trung bình, Khó, Rất khó
+  estimatedTime  String?
+  isPopular      Boolean               @default(false)
+  isActive       Boolean               @default(true)
+  imageUrl       String?
+  requirements   String?
+  priceOptions   ServicePriceOption[]
+  orders         Order[]
+  reviews        Review[]
+  tags           ServiceTag[]
+  favorites      Favorite[]
+
+  @@map("services")
+}
+
+model ServicePriceOption {
+  id            String    @id @default(uuid())
+  serviceId     String
+  service       Service   @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  name          String
+  price         Float
+  originalPrice Float?
+  description   String?
+  orders        Order[]
+
+  @@map("service_price_options")
+}
+
+// ===== 3. ORDERS & CRITICAL DATA =====
+model Order {
+  id                String              @id @default(uuid())
+  orderNumber       String              @unique // Dạng GF-YYYY-XXXX
+  userId            String
+  user              User                @relation("CustomerOrders", fields: [userId], references: [id])
+  boosterId         String?
+  booster           User?               @relation("BoosterOrders", fields: [boosterId], references: [id])
+  boosterCommission Float?              // Hoa hồng dành cho Booster (VNĐ)
+  serviceId         String
+  service           Service             @relation(fields: [serviceId], references: [id])
+  priceOptionId     String
+  priceOption       ServicePriceOption  @relation(fields: [priceOptionId], references: [id])
+  amount            Float
+  status            String              // pending_payment, paid_waiting_account, waiting_admin_accept, in_progress, etc.
+  uid               String              // 9 số UID game
+  server            String              // Asia, Europe, America, TW/HK/MO
+  note              String?
+  resultImages      String[]            @default([])
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  statusLogs        OrderStatusLog[]
+  messages          OrderMessage[]
+  credentials       OrderCredential?
+  transactions      WalletTransaction[]
+  review            Review?
+  refundRequest     RefundRequest?
+  couponRedemption  CouponRedemption?
+
+  @@map("orders")
+}
+
+model OrderStatusLog {
+  id        String   @id @default(uuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status    String
+  note      String?
+  createdAt DateTime @default(now())
+  createdBy String   // system, name admin, v.v.
+
+  @@map("order_status_logs")
+}
+
+model OrderCredential {
+  id                String   @id @default(uuid())
+  orderId           String   @unique
+  order             Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  encryptedPassword String   // Mật khẩu mã hóa AES-256-GCM
+  viewCount         Int      @default(0)
+  expiresAt         DateTime // Thời hạn tự động vô hiệu hóa/xóa mật khẩu
+  isUsed            Boolean  @default(false)
+  createdAt         DateTime @default(now())
+
+  @@map("order_credentials")
+}
+
+model OrderMessage {
+  id          String   @id @default(uuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  message     String
+  senderRole  Role
+  senderName  String
+  createdAt   DateTime @default(now())
+  attachments String[] @default([])
+
+  @@map("order_messages")
+}
+
+// ===== 4. WALLET & LEDGER =====
+model WalletTransaction {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  type        String   // deposit, hold, charge, refund, adjustment, bonus
+  amount      Float    // Giá trị âm/dương
+  balance     Float    // Số dư sau giao dịch (ghi nhận thời điểm đó)
+  description String
+  orderId     String?
+  order       Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  status      String   // success, pending, failed
+  createdAt   DateTime @default(now())
+
+  @@map("wallet_transactions")
+}
+
+// ===== 5. PAYMENTS =====
+model PaymentIntent {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  amount        Float
+  status        String   // pending, completed, expired, cancelled
+  paymentCode   String   @unique // NAP-USERXXX-PAYIDXXX
+  qrCodeUrl     String?
+  bankName      String
+  accountNumber String
+  accountName   String
+  content       String
+  expiresAt     DateTime
+  createdAt     DateTime @default(now())
+
+  @@map("payment_intents")
+}
+
+model PaymentWebhookEvent {
+  id         String   @id @default(uuid())
+  webhookId  String   @unique
+  payload    Json
+  processed  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@map("payment_webhook_events")
+}
+
+// ===== 6. AUDIT & SETTINGS =====
+model AdminAuditLog {
+  id        String   @id @default(uuid())
+  adminId   String
+  admin     User     @relation(fields: [adminId], references: [id])
+  adminName String
+  action    String   // VIEW_CREDENTIALS, ADJUST_BALANCE, UPDATE_SERVICE, etc.
+  target    String
+  details   String?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  @@map("admin_audit_logs")
+}
+
+model SystemSetting {
+  id    String @id @default(uuid())
+  key   String @unique
+  value String
+
+  @@map("system_settings")
+}
+
+model PagesContent {
+  id        String   @id @default(uuid())
+  pageName  String   @unique // terms, privacy, refund, etc.
+  content   String   // Markdown string
+  updatedAt DateTime @updatedAt
+
+  @@map("pages_content")
+}
+
+// ===== 7. REVIEWS (Sprint 4) =====
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Review {
+  id          String       @id @default(uuid())
+  userId      String
+  user        User         @relation(fields: [userId], references: [id])
+  orderId     String       @unique
+  order       Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  serviceId   String
+  service     Service      @relation(fields: [serviceId], references: [id])
+  rating      Int          // 1-5
+  content     String
+  images      String[]     @default([])
+  status      ReviewStatus @default(PENDING)
+  adminReply  String?
+  createdAt   DateTime     @default(now())
+
+  @@index([serviceId, status])
+  @@map("reviews")
+}
+
+// ===== 8. NOTIFICATIONS (Sprint 5) =====
+model Notification {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  type      String    // order_status, payment, message, refund, promotion, system
+  title     String
+  content   String
+  href      String?
+  payload   Json?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, readAt])
+  @@map("notifications")
+}
+
+// ===== 9. CONVERSATIONS — pre-sale chat (Sprint 5) =====
+model Conversation {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation("UserConversations", fields: [userId], references: [id])
+  adminId       String?
+  admin         User?    @relation("AdminConversations", fields: [adminId], references: [id])
+  subject       String?
+  status        String   @default("OPEN") // OPEN, CLOSED, ARCHIVED
+  lastMessageAt DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  messages      ConversationMessage[]
+
+  @@index([userId, lastMessageAt])
+  @@map("conversations")
+}
+
+model ConversationMessage {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  senderRole     Role
+  content        String
+  attachments    String[]     @default([])
+  readAt         DateTime?
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId, createdAt])
+  @@map("conversation_messages")
+}
+
+// ===== 10. REFUNDS / DISPUTES (Sprint 4) =====
+enum RefundStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+model RefundRequest {
+  id          String       @id @default(uuid())
+  orderId     String       @unique
+  order       Order        @relation(fields: [orderId], references: [id])
+  userId      String
+  user        User         @relation(fields: [userId], references: [id])
+  reason      String
+  description String?
+  evidence    String[]     @default([])
+  status      RefundStatus @default(PENDING)
+  amount      Float
+  resolution  String?
+  processedBy String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([status, createdAt])
+  @@map("refund_requests")
+}
+
+// ===== 11. COUPON nâng cao (Sprint 5) =====
+enum DiscountType {
+  PERCENT
+  FIXED
+}
+
+model Coupon {
+  id                String              @id @default(uuid())
+  code              String              @unique
+  description       String?
+  discountType      DiscountType        @default(PERCENT)
+  discount          Float               // % hoặc số tiền tuỳ discountType
+  maxDiscount       Float?
+  minOrderValue     Float               @default(0)
+  usageLimit        Int?
+  usagePerUser      Int                 @default(1)
+  appliesToAll      Boolean             @default(true)
+  serviceIds        String[]            @default([])
+  categoryIds       String[]            @default([])
+  userRestrictions  String[]            @default([]) // user IDs được phép dùng (empty = tất cả)
+  isActive          Boolean             @default(true)
+  startsAt          DateTime?
+  expiresAt         DateTime
+  redemptions       CouponRedemption[]
+  createdAt         DateTime            @default(now())
+
+  @@map("coupons")
+}
+
+model CouponRedemption {
+  id             String   @id @default(uuid())
+  couponId       String
+  coupon         Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  orderId        String   @unique
+  order          Order    @relation(fields: [orderId], references: [id])
+  discountAmount Float
+  createdAt      DateTime @default(now())
+
+  @@index([couponId, userId])
+  @@map("coupon_redemptions")
+}
+
+// ===== 12. FAQs (Sprint 6) =====
+model FaqCategory {
+  id        String     @id @default(uuid())
+  name      String
+  order     Int        @default(0)
+  items     FaqItem[]
+
+  @@map("faq_categories")
+}
+
+model FaqItem {
+  id         String      @id @default(uuid())
+  categoryId String
+  category   FaqCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  question   String
+  answer     String
+  order      Int         @default(0)
+  isActive   Boolean     @default(true)
+  createdAt  DateTime    @default(now())
+
+  @@map("faq_items")
+}
+
+// ===== 13. BLOG / ARTICLES (Sprint 6) =====
+enum ArticleStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model Article {
+  id          String        @id @default(uuid())
+  slug        String        @unique
+  title       String
+  excerpt     String?
+  content     String        // MDX/Markdown
+  coverImage  String?
+  authorId    String
+  author      User          @relation(fields: [authorId], references: [id])
+  tags        String[]      @default([])
+  status      ArticleStatus @default(DRAFT)
+  publishedAt DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([status, publishedAt])
+  @@map("articles")
+}
+
+// ===== 14. TAGS cho dịch vụ (Sprint 3) =====
+model Tag {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  slug      String   @unique
+  services  ServiceTag[]
+  createdAt DateTime @default(now())
+
+  @@map("tags")
+}
+
+model ServiceTag {
+  serviceId String
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  tagId     String
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([serviceId, tagId])
+  @@map("service_tags")
+}
+
+// ===== 15. FAVORITES / WISHLIST (Sprint 3) =====
+model Favorite {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  serviceId String
+  service   Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, serviceId])
+  @@map("favorites")
+}
