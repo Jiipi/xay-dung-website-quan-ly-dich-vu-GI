@@ -32,7 +32,6 @@ function buildCspHeader(nonce: string): string {
     "default-src": ["'self'"],
     "script-src": [
       "'self'",
-      `'nonce-${nonce}'`,
       "'unsafe-inline'",
       "'unsafe-eval'",
       "https://*.payos.vn",
