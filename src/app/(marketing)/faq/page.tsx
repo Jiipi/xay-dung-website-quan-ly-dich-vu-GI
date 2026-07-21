@@ -1,5 +1,7 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import { db } from "@/lib/db";
+
+export const dynamic = "force-dynamic";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   HelpCircle,

@@ -1,5 +1,8 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import { db } from "@/lib/db";
+
+export const dynamic = "force-dynamic";
+
 import { ServicesList } from "./_components/services-list";
 
 import { MarketingPageShell } from "@/components/marketing/MarketingPageShell";

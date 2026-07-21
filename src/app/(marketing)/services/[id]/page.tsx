@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
+
+export const dynamic = "force-dynamic";
+
 import ServiceDetailView from "./_components/service-detail";
 
 interface Props {

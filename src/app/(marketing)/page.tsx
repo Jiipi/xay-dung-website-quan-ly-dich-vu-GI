@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { db } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 import { CTASection } from "@/components/marketing/CTASection";
 import { FAQAccordion } from "@/components/marketing/FAQAccordion";
 import { FeatureGrid } from "@/components/marketing/FeatureGrid";

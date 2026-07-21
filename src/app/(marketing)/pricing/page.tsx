@@ -5,6 +5,9 @@ import { ArrowRight, Clock, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { db } from "@/lib/db";
+
+export const dynamic = "force-dynamic";
+
 import { formatCurrency } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 

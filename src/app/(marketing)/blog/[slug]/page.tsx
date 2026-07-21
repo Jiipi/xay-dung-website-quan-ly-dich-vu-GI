@@ -3,6 +3,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
+
+export const dynamic = "force-dynamic";
+
 import { MarketingPageShell } from "@/components/marketing/MarketingPageShell";
 import { Reveal } from "@/components/animations/Reveal";
 import { Card, CardContent } from "@/components/ui/card";
