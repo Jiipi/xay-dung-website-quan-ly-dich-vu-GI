@@ -16,9 +16,10 @@ export async function GET() {
       services,
     });
   } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
     console.error("Lỗi lấy danh sách dịch vụ:", error);
     return NextResponse.json(
-      { error: "Lỗi kết nối máy chủ" },
+      { error: "Lỗi kết nối máy chủ", details: message },
       { status: 500 }
     );
   }
