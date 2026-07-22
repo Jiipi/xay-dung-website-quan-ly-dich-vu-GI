@@ -178,6 +178,21 @@ export default function CustomerOrderDetailPage() {
       }
     };
     fetchOrderDetail();
+
+    const fetchMessagesOnly = async () => {
+      try {
+        const res = await fetch(`/api/orders/${orderId}/messages`);
+        const data = await res.json();
+        if (data.success) {
+          setMessages(data.messages);
+        }
+      } catch (e) {
+        console.error("Lỗi cập nhật tin nhắn:", e);
+      }
+    };
+
+    const interval = setInterval(fetchMessagesOnly, 3000);
+    return () => clearInterval(interval);
   }, [orderId, router]);
 
   useEffect(() => {

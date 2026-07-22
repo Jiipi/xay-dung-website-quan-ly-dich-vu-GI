@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState, useEffect } from "react";
+import { use, useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { formatCurrency, formatDate } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
 import {
   ArrowLeft,
   Loader2,
@@ -15,11 +16,13 @@ import {
   Package,
   Clock,
   Key,
-  AlertTriangle,
   Eye,
   CheckCircle2,
   XCircle,
   ShieldCheck,
+  MessageCircle,
+  Send,
+  AlertTriangle,
 } from "lucide-react";
 
 interface StatusLog {
@@ -28,6 +31,14 @@ interface StatusLog {
   previousStatus?: string | null;
   newStatus?: string;
   note?: string | null;
+  createdAt: string;
+}
+
+interface OrderMessage {
+  id: string;
+  message: string;
+  senderRole: string;
+  senderName: string;
   createdAt: string;
 }
 
@@ -71,6 +82,10 @@ export default function AdminOrderDetailPage({
   const [updating, setUpdating] = useState(false);
   const [revealedPass, setRevealedPass] = useState<string | null>(null);
 
+  const [messages, setMessages] = useState<OrderMessage[]>([]);
+  const [newMessage, setNewMessage] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
   const fetchOrderDetail = async () => {
     try {
       const res = await fetch(`/api/admin/orders/${orderId}`);
@@ -88,15 +103,57 @@ export default function AdminOrderDetailPage({
       console.error(e);
       toast.error("Lỗi mạng khi tải đơn hàng");
     } finally {
-       
       setLoading(false);
     }
   };
 
+  const fetchMessages = async () => {
+    try {
+      const res = await fetch(`/api/orders/${orderId}/messages`);
+      const data = await res.json();
+      if (data.success) {
+        setMessages(data.messages);
+      }
+    } catch (e) {
+      console.error("Lỗi lấy tin nhắn đơn hàng:", e);
+    }
+  };
+
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchOrderDetail();
+    fetchMessages();
+    const interval = setInterval(fetchMessages, 3000);
+    return () => clearInterval(interval);
   }, [orderId]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const content = newMessage.trim();
+    if (!content) return;
+    setNewMessage("");
+
+    try {
+      const res = await fetch(`/api/orders/${orderId}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: content }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setMessages((prev) => [...prev, data.message]);
+      } else {
+        toast.error(data.error || "Không gửi được tin nhắn");
+        setNewMessage(content);
+      }
+    } catch {
+      toast.error("Lỗi kết nối khi gửi tin nhắn");
+      setNewMessage(content);
+    }
+  };
 
   const handleUpdateStatus = async (newStatus: string) => {
     setUpdating(true);
@@ -332,6 +389,64 @@ export default function AdminOrderDetailPage({
                   </Button>
                 )}
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Chat Box with Customer */}
+          <Card className="border-slate-800 bg-slate-950/80 shadow-lg">
+            <CardHeader className="pb-3 border-b border-slate-800 flex flex-row items-center justify-between">
+              <CardTitle className="text-base font-bold text-white flex items-center gap-2">
+                <MessageCircle className="h-5 w-5 text-blue-400" />
+                Trao đổi với Khách hàng
+              </CardTitle>
+              <Badge variant="outline" className="text-[10px] border-blue-500/30 text-blue-400">
+                Trực tiếp
+              </Badge>
+            </CardHeader>
+            <CardContent className="p-0 flex flex-col h-[380px]">
+              <div className="flex-1 overflow-y-auto p-4 space-y-3 text-xs scrollbar-thin">
+                {messages.length === 0 ? (
+                  <div className="h-full flex items-center justify-center text-slate-500 italic">
+                    Chưa có tin nhắn nào trong đơn hàng này.
+                  </div>
+                ) : (
+                  messages.map((msg) => {
+                    const isAdminMsg = msg.senderRole === "ADMIN" || msg.senderRole === "BOOSTER";
+                    return (
+                      <div
+                        key={msg.id}
+                        className={`flex flex-col ${isAdminMsg ? "items-end" : "items-start"}`}
+                      >
+                        <span className="text-[10px] text-slate-500 mb-1">
+                          {msg.senderName} ({msg.senderRole}) • {formatDate(msg.createdAt)}
+                        </span>
+                        <div
+                          className={`max-w-[80%] px-3 py-2 rounded-2xl text-xs break-words ${
+                            isAdminMsg
+                              ? "bg-amber-500 text-black font-semibold rounded-tr-none"
+                              : "bg-slate-900 text-slate-200 border border-slate-800 rounded-tl-none"
+                          }`}
+                        >
+                          {msg.message}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+
+              <form onSubmit={handleSendMessage} className="p-3 border-t border-slate-800 flex gap-2 bg-slate-900 shrink-0">
+                <Input
+                  placeholder="Nhập tin nhắn phản hồi tới khách hàng..."
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  className="flex-1 text-xs bg-slate-950 border-slate-700 text-white"
+                />
+                <Button type="submit" size="icon" className="h-9 w-9 bg-amber-500 hover:bg-amber-600 text-black font-bold">
+                  <Send className="h-4 w-4" />
+                </Button>
+              </form>
             </CardContent>
           </Card>
         </div>
