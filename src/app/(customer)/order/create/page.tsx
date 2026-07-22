@@ -327,7 +327,7 @@ function OrderWizardContent() {
                               )}
                             </div>
                             <span className="font-bold text-sm text-primary">
-                              {opt.price === 0 ? "Liên hệ" : formatCurrency(opt.price)}
+                              {formatCurrency(opt.price)}
                             </span>
                           </div>
                         ))}

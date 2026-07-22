@@ -482,85 +482,87 @@ function ServiceCard({ service }: { service: ServiceListItem }) {
       href={`/services/${service.id}`}
       className="group block h-full rounded-xl overflow-hidden border border-border/60 bg-card/80 backdrop-blur-md shadow-sm hover:bg-card/95 transition-all hover-lift"
     >
-      <Card className="h-full border-0 bg-transparent shadow-none">
-        <div className="relative aspect-[16/10] bg-muted overflow-hidden">
-          {service.imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={service.imageUrl}
-              alt={service.name}
-              className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            />
-          ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-amber-500/20 flex items-center justify-center">
-              <Sparkles className="h-10 w-10 text-white/30" />
-            </div>
-          )}
-
-          {/* Top badges */}
-          <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
-            {service.isPopular && (
-              <Badge className="bg-amber-500 hover:bg-amber-500 text-black font-bold text-[10px]">
-                <Flame className="mr-1 h-3 w-3" />
-                Phổ biến
-              </Badge>
+      <Card className="h-full border-0 bg-transparent shadow-none flex flex-col justify-between">
+        <div>
+          <div className="relative aspect-[16/10] bg-muted overflow-hidden">
+            {service.imageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={service.imageUrl}
+                alt={service.name}
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+            ) : (
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-amber-500/20 flex items-center justify-center">
+                <Sparkles className="h-10 w-10 text-white/30" />
+              </div>
             )}
-            <Badge
-              variant="outline"
-              className="bg-black/50 backdrop-blur-sm text-white border-white/20 text-[10px]"
-            >
-              <span className="mr-1">{service.category.icon}</span>
-              {service.category.name}
-            </Badge>
+
+            {/* Top badges */}
+            <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
+              {service.isPopular && (
+                <Badge className="bg-amber-500 hover:bg-amber-500 text-black font-bold text-[10px]">
+                  <Flame className="mr-1 h-3 w-3" />
+                  Phổ biến
+                </Badge>
+              )}
+              <Badge
+                variant="outline"
+                className="bg-black/50 backdrop-blur-sm text-white border-white/20 text-[10px]"
+              >
+                <span className="mr-1">{service.category.icon}</span>
+                {service.category.name}
+              </Badge>
+            </div>
           </div>
+
+          <CardContent className="p-5 flex flex-col gap-3">
+            <h3 className="text-lg font-bold leading-tight line-clamp-2 min-h-[3rem] flex items-center group-hover:text-primary transition-colors">
+              {service.name}
+            </h3>
+            <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed min-h-[2.5rem]">
+              {service.description}
+            </p>
+
+            {/* Meta */}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground min-h-[1.5rem]">
+              {showStars && (
+                <span className="inline-flex items-center gap-1">
+                  <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                  <span className="font-semibold text-foreground">
+                    {service.avgRating.toFixed(1)}
+                  </span>
+                  <span>({service.reviewCount})</span>
+                </span>
+              )}
+              {service.estimatedTime && (
+                <span className="inline-flex items-center gap-1">
+                  <Clock className="h-3.5 w-3.5" />
+                  {service.estimatedTime}
+                </span>
+              )}
+              {service.difficulty && (
+                <Badge variant="secondary" className="text-[10px]">
+                  <Tag className="mr-1 h-3 w-3" />
+                  {service.difficulty}
+                </Badge>
+              )}
+            </div>
+          </CardContent>
         </div>
 
-        <CardContent className="p-5 space-y-3">
-          <h3 className="text-lg font-bold leading-snug line-clamp-2 group-hover:text-primary transition-colors">
-            {service.name}
-          </h3>
-          <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed min-h-10">
-            {service.description}
-          </p>
-
-          {/* Meta */}
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-            {showStars && (
-              <span className="inline-flex items-center gap-1">
-                <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                <span className="font-semibold text-foreground">
-                  {service.avgRating.toFixed(1)}
-                </span>
-                <span>({service.reviewCount})</span>
-              </span>
-            )}
-            {service.estimatedTime && (
-              <span className="inline-flex items-center gap-1">
-                <Clock className="h-3.5 w-3.5" />
-                {service.estimatedTime}
-              </span>
-            )}
-            {service.difficulty && (
-              <Badge variant="secondary" className="text-[10px]">
-                <Tag className="mr-1 h-3 w-3" />
-                {service.difficulty}
-              </Badge>
-            )}
-          </div>
-
-          <Separator />
+        <div className="px-5 pb-5">
+          <Separator className="mb-3" />
 
           {/* Price + CTA */}
-          <div className="flex items-end justify-between gap-2 pt-1">
+          <div className="flex items-end justify-between gap-2">
             <div>
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">
                 Giá từ
               </p>
               <p className="text-lg font-extrabold text-amber-500">
                 {firstOption
-                  ? firstOption.price === 0
-                    ? "Liên hệ"
-                    : formatCurrency(firstOption.price)
+                  ? formatCurrency(firstOption.price)
                   : formatCurrency(0)}
               </p>
             </div>
@@ -569,7 +571,7 @@ function ServiceCard({ service }: { service: ServiceListItem }) {
               <ArrowRight className="h-3.5 w-3.5" />
             </span>
           </div>
-        </CardContent>
+        </div>
       </Card>
     </Link>
   );

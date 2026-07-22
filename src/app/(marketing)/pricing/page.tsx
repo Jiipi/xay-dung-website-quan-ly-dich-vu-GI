@@ -188,7 +188,7 @@ export default async function PricingPage() {
                             <span className="font-medium text-foreground">{opt.name}</span>
                             <div className="text-right">
                               <span className="font-bold text-amber-500">
-                                {opt.price === 0 ? "Liên hệ báo giá" : formatCurrency(opt.price)}
+                                {formatCurrency(opt.price)}
                               </span>
                               {opt.originalPrice != null &&
                                 opt.originalPrice > opt.price ? (
