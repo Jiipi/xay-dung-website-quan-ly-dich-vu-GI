@@ -53,6 +53,7 @@ interface NavUser {
   email: string;
   role: string;
   balance: number;
+  avatarUrl?: string | null;
 }
 
 export function Navbar() {
@@ -238,10 +239,15 @@ export function Navbar() {
                 </Link>
                 <DropdownMenu>
                   <DropdownMenuTrigger className="flex items-center gap-2 rounded-full pl-1 pr-2 py-1 hover:bg-muted transition-colors outline-none">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
-                        {user!.name.charAt(0)}
-                      </AvatarFallback>
+                    <Avatar className="h-8 w-8 border border-primary/20 overflow-hidden">
+                      {user?.avatarUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={user.avatarUrl} alt={user.name} className="h-full w-full object-cover" />
+                      ) : (
+                        <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
+                          {user!.name.charAt(0)}
+                        </AvatarFallback>
+                      )}
                     </Avatar>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-60">

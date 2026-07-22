@@ -47,6 +47,7 @@ interface AdminUserData {
   name: string;
   email: string;
   role: string;
+  avatarUrl?: string | null;
 }
 
 function AdminSidebarContent({
@@ -243,10 +244,15 @@ export function AdminShell({
               <span className="text-xs text-slate-400 bg-slate-900 px-2 py-1 rounded border border-slate-800 hidden md:inline-block">
                 Chế độ Bảo mật cao
               </span>
-              <Avatar className="h-8 w-8 border border-slate-700">
-                <AvatarFallback className="bg-amber-500/10 text-amber-500 text-xs font-semibold">
-                  {adminName.charAt(0)}
-                </AvatarFallback>
+              <Avatar className="h-8 w-8 border border-slate-700 overflow-hidden">
+                {user?.avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={user.avatarUrl} alt={adminName} className="h-full w-full object-cover" />
+                ) : (
+                  <AvatarFallback className="bg-amber-500/10 text-amber-500 text-xs font-semibold">
+                    {adminName.charAt(0)}
+                  </AvatarFallback>
+                )}
               </Avatar>
             </div>
         </header>
