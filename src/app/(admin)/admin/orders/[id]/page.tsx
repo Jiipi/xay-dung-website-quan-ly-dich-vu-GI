@@ -21,28 +21,38 @@ import {
 
 interface StatusLog {
   id: string;
+  status?: string;
   previousStatus?: string | null;
-  newStatus: string;
+  newStatus?: string;
   note?: string | null;
   createdAt: string;
 }
 
 interface OrderDetail {
   id: string;
+  orderNumber?: string;
   status: string;
-  finalAmount: number;
-  totalAmount: number;
-  discountAmount: number;
+  amount?: number;
+  finalAmount?: number;
+  totalAmount?: number;
+  discountAmount?: number;
   accountLoginType?: string | null;
   ingameName?: string | null;
+  uid?: string | null;
+  server?: string | null;
+  note?: string | null;
   notes?: string | null;
   createdAt: string;
   updatedAt: string;
-  user: { name: string; email: string };
-  service: { name: string };
+  userName?: string;
+  userEmail?: string;
+  user?: { name: string; email: string };
+  serviceName?: string;
+  service?: { name: string };
+  priceOptionName?: string;
   priceOption?: { name: string } | null;
-  statusLogs: StatusLog[];
-  credentials: { id: string; viewCount: number; expiresAt: string; isUsed: boolean }[];
+  statusLogs?: StatusLog[];
+  credentials?: { id: string; viewCount: number; expiresAt: string; isUsed: boolean }[];
 }
 
 export default function AdminOrderDetailPage({
@@ -232,15 +242,21 @@ export default function AdminOrderDetailPage({
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className="text-xs text-slate-400">Tên dịch vụ</p>
-                  <p className="font-semibold text-white mt-0.5">{order.service.name}</p>
+                  <p className="font-semibold text-white mt-0.5">
+                    {order.serviceName || order.service?.name || "Dịch vụ cày thuê"}
+                  </p>
                 </div>
                 <div>
                   <p className="text-xs text-slate-400">Gói tùy chọn</p>
-                  <p className="font-semibold text-white mt-0.5">{order.priceOption?.name || "Gói tiêu chuẩn"}</p>
+                  <p className="font-semibold text-white mt-0.5">
+                    {order.priceOptionName || order.priceOption?.name || "Gói tiêu chuẩn"}
+                  </p>
                 </div>
                 <div>
                   <p className="text-xs text-slate-400">Tổng tiền</p>
-                  <p className="font-semibold text-amber-400 text-base mt-0.5">{formatCurrency(order.finalAmount)}</p>
+                  <p className="font-semibold text-amber-400 text-base mt-0.5">
+                    {formatCurrency(order.amount ?? order.finalAmount ?? 0)}
+                  </p>
                 </div>
                 <div>
                   <p className="text-xs text-slate-400">Thời gian khởi tạo</p>
@@ -261,8 +277,10 @@ export default function AdminOrderDetailPage({
             <CardContent className="pt-4 space-y-4">
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <p className="text-xs text-slate-400">Tên nhân vật / UID</p>
-                  <p className="font-semibold text-white mt-0.5">{order.ingameName || "Chưa cung cấp"}</p>
+                  <p className="text-xs text-slate-400">UID / Server Game</p>
+                  <p className="font-semibold text-white mt-0.5">
+                    {order.uid ? `${order.uid}${order.server ? ` (${order.server})` : ""}` : (order.ingameName || "Chưa cung cấp")}
+                  </p>
                 </div>
                 <div>
                   <p className="text-xs text-slate-400">Phương thức đăng nhập</p>
@@ -270,10 +288,10 @@ export default function AdminOrderDetailPage({
                 </div>
               </div>
 
-              {order.notes && (
+              {(order.note || order.notes) && (
                 <div className="p-3 rounded-lg bg-slate-900 border border-slate-800 text-xs">
-                  <p className="text-slate-400 font-semibold mb-1">Ghi chú từ khách hàng:</p>
-                  <p className="text-slate-200">{order.notes}</p>
+                  <p className="text-slate-400 font-semibold mb-1">Ghi chú & Yêu cầu từ khách hàng:</p>
+                  <p className="text-slate-200">{order.note || order.notes}</p>
                 </div>
               )}
 
@@ -307,8 +325,8 @@ export default function AdminOrderDetailPage({
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-4 space-y-2 text-sm">
-              <p className="font-semibold text-white">{order.user.name}</p>
-              <p className="text-xs text-slate-400">{order.user.email}</p>
+              <p className="font-semibold text-white">{order.userName || order.user?.name || "Khách hàng"}</p>
+              <p className="text-xs text-slate-400">{order.userEmail || order.user?.email || "—"}</p>
             </CardContent>
           </Card>
 
@@ -322,10 +340,10 @@ export default function AdminOrderDetailPage({
             </CardHeader>
             <CardContent className="pt-4">
               <div className="space-y-4 text-xs">
-                {order.statusLogs.map((log) => (
+                {(order.statusLogs || []).map((log) => (
                   <div key={log.id} className="border-l-2 border-slate-700 pl-3 py-1 space-y-0.5">
                     <p className="font-semibold text-slate-200">
-                      Chuyển sang <span className="text-amber-400">{log.newStatus}</span>
+                      Chuyển sang <span className="text-amber-400">{log.status || log.newStatus}</span>
                     </p>
                     <p className="text-slate-500">{formatDate(log.createdAt)}</p>
                   </div>

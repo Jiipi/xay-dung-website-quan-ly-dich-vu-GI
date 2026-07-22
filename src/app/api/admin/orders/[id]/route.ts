@@ -67,7 +67,7 @@ export async function GET(
       userEmail: order.user.email,
       serviceId: order.serviceId,
       serviceName: order.service.name,
-      priceOptionName: order.priceOption.name,
+      priceOptionName: order.priceOption?.name || "Gói tiêu chuẩn",
       amount: order.amount,
       status: order.status,
       uid: order.uid,
