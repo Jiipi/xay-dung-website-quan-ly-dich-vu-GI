@@ -49,12 +49,30 @@ export default function AdminDepositsPage() {
     fetchDeposits();
   }, []);
 
-  const handleApproveDeposit = (id: string, code: string) => {
-    // Giả lập duyệt tay thành công
-    setIntents(
-      intents.map((pi) => (pi.id === id ? { ...pi, status: "completed" } : pi))
-    );
-    toast.success(`Duyệt thủ công giao dịch nạp tiền ${code} thành công!`);
+  const [approvingId, setApprovingId] = useState<string | null>(null);
+
+  const handleApproveDeposit = async (id: string, code: string) => {
+    try {
+      setApprovingId(id);
+      const res = await fetch("/api/admin/deposits/approve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paymentIntentId: id }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setIntents(
+          intents.map((pi) => (pi.id === id ? { ...pi, status: "completed" } : pi))
+        );
+        toast.success(data.message || `Duyệt thủ công giao dịch ${code} thành công!`);
+      } else {
+        toast.error(data.error || "Không thể duyệt giao dịch này");
+      }
+    } catch {
+      toast.error("Lỗi mạng khi kết nối máy chủ");
+    } finally {
+      setApprovingId(null);
+    }
   };
 
   return (
@@ -132,10 +150,15 @@ export default function AdminDepositsPage() {
                           <Button
                             variant="ghost"
                             size="icon"
+                            disabled={approvingId === intent.id}
                             onClick={() => handleApproveDeposit(intent.id, intent.paymentCode)}
                             className="h-8 w-8 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-950/20"
                           >
-                            <Check className="h-4 w-4" />
+                            {approvingId === intent.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin text-emerald-400" />
+                            ) : (
+                              <Check className="h-4 w-4" />
+                            )}
                           </Button>
                         )}
                       </TableCell>

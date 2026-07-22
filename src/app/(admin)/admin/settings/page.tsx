@@ -1,13 +1,13 @@
-﻿"use client";
+"use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Landmark, KeyRound, Save } from "lucide-react";
+import { Landmark, KeyRound, Save, Loader2 } from "lucide-react";
 
 export default function AdminSettingsPage() {
   const [bankName, setBankName] = useState("Vietcombank");
@@ -18,14 +18,66 @@ export default function AdminSettingsPage() {
   const [payosApiKey, setPayosApiKey] = useState("sandbox_api_key_789012");
   const [payosChecksum, setPayosChecksum] = useState("sandbox_checksum_345678");
 
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await fetch("/api/admin/settings");
+        const data = await res.json();
+        if (data.success && data.settings) {
+          if (data.settings.bankName) setBankName(data.settings.bankName);
+          if (data.settings.accountNumber) setAccountNumber(data.settings.accountNumber);
+          if (data.settings.accountName) setAccountName(data.settings.accountName);
+          if (data.settings.payosClientId) setPayosClientId(data.settings.payosClientId);
+          if (data.settings.payosApiKey) setPayosApiKey(data.settings.payosApiKey);
+          if (data.settings.payosChecksum) setPayosChecksum(data.settings.payosChecksum);
+        }
+      } catch (err) {
+        console.error("Lỗi lấy cấu hình hệ thống:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  const saveSettings = async (settingsToSave: Record<string, string>, successMsg: string) => {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ settings: settingsToSave }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(successMsg);
+      } else {
+        toast.error(data.error || "Không thể lưu cấu hình");
+      }
+    } catch {
+      toast.error("Lỗi kết nối máy chủ");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleSaveBank = (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success("Đã cập nhật thông tin ngân hàng nạp tiền VietQR!");
+    saveSettings(
+      { bankName, accountNumber, accountName },
+      "Đã cập nhật thông tin ngân hàng nạp tiền VietQR vào CSDL!"
+    );
   };
 
   const handleSavePayos = (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success("Đã cập nhật API Keys payOS Sandbox!");
+    saveSettings(
+      { payosClientId, payosApiKey, payosChecksum },
+      "Đã cập nhật API Keys payOS vào CSDL!"
+    );
   };
 
   return (
@@ -93,8 +145,9 @@ export default function AdminSettingsPage() {
                   </div>
                 </div>
 
-                <Button type="submit" className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold gap-2">
-                  <Save className="h-4 w-4" /> Lưu cấu hình ngân hàng
+                <Button type="submit" disabled={saving} className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold gap-2">
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  Lưu cấu hình ngân hàng
                 </Button>
               </form>
             </CardContent>
@@ -147,8 +200,9 @@ export default function AdminSettingsPage() {
                   />
                 </div>
 
-                <Button type="submit" className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold gap-2">
-                  <Save className="h-4 w-4" /> Lưu thông tin API keys
+                <Button type="submit" disabled={saving} className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold gap-2">
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  Lưu thông tin API keys
                 </Button>
               </form>
             </CardContent>

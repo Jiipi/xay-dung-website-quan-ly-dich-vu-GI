@@ -1,41 +1,64 @@
-﻿"use client";
+"use client";
 
-import { useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Save, Layout } from "lucide-react";
+import { Save, Layout, Loader2 } from "lucide-react";
 
 export default function AdminPagesContentPage() {
   const [selectedPage, setSelectedPage] = useState("terms");
-  const [pageContent, setPageContent] = useState(
-    `# Điều khoản dịch vụ\n\nCập nhật lần cuối: 01/07/2026\n\n## 1. Giới thiệu\nChào mừng bạn đến với Genshin77...`
-  );
+  const [pageContent, setPageContent] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const fetchPageContent = useCallback(async (pageName: string) => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/pages?pageName=${pageName}`);
+      const data = await res.json();
+      if (data.success) {
+        setPageContent(data.content || "");
+      }
+    } catch {
+      toast.error("Lỗi khi tải nội dung trang");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchPageContent(selectedPage);
+  }, [selectedPage, fetchPageContent]);
 
   const handlePageChange = (val: string | null) => {
     if (!val) return;
     setSelectedPage(val);
-    if (val === "terms") {
-      setPageContent(
-        `# Điều khoản dịch vụ\n\nCập nhật lần cuối: 01/07/2026\n\n## 1. Giới thiệu\nChào mừng bạn đến với Genshin77...`
-      );
-    } else if (val === "privacy") {
-      setPageContent(
-        `# Chính sách bảo mật\n\nCập nhật lần cuối: 01/07/2026\n\n## 1. Dữ liệu chúng tôi thu thập...`
-      );
-    } else if (val === "refund") {
-      setPageContent(
-        `# Chính sách hoàn tiền\n\nCập nhật lần cuối: 01/07/2026\n\n## 1. Nguyên tắc chung...`
-      );
-    }
   };
 
-  const handleSaveContent = (e: React.FormEvent) => {
+  const handleSaveContent = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success(`Cập nhật nội dung trang tĩnh thành công!`);
+    setSaving(true);
+    try {
+      const res = await fetch("/api/admin/pages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pageName: selectedPage, content: pageContent }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(data.message || `Cập nhật nội dung trang ${selectedPage} thành công!`);
+      } else {
+        toast.error(data.error || "Không thể lưu nội dung trang");
+      }
+    } catch {
+      toast.error("Lỗi mạng khi kết nối máy chủ");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -83,8 +106,9 @@ export default function AdminPagesContentPage() {
               />
             </div>
 
-            <Button type="submit" className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold gap-2">
-              <Save className="h-4 w-4" /> Lưu và cập nhật trang
+            <Button type="submit" disabled={saving || loading} className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold gap-2">
+              {saving ? <Loader2 className="h-4 w-4 animate-spin text-slate-950" /> : <Save className="h-4 w-4" />}
+              Lưu và cập nhật trang
             </Button>
           </form>
         </CardContent>

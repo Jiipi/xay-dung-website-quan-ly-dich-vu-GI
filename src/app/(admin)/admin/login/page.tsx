@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -133,8 +133,7 @@ export default function AdminLoginPage() {
             <div className="flex gap-2 items-start mt-6 p-3 rounded bg-slate-950 border border-slate-800 text-[10px] text-slate-400">
               <ShieldAlert className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
               <p className="leading-relaxed">
-                Hành động đăng nhập hệ thống quản trị sẽ được ghi lại nhật ký IP để phòng chống
-                truy cập trái phép. Mật khẩu mặc định sandbox: <code>admin@Genshin77.vn</code> / <code>admin123</code>.
+                Hành động đăng nhập hệ thống quản trị được bảo mật nghiêm ngặt và ghi lại nhật ký địa chỉ IP để chống truy cập trái phép.
               </p>
             </div>
           </CardContent>

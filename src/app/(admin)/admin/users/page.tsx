@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Search, Ban, CheckCircle, Loader2 } from "lucide-react";
+import { Search, Ban, CheckCircle, Eye, Loader2 } from "lucide-react";
 import { formatShortDate, formatCurrency } from "@/lib/constants";
 
 interface UserInfo {
@@ -154,7 +155,17 @@ export default function AdminUsersPage() {
                           {u.isActive ? "Đang hoạt động" : "Đang bị khóa"}
                         </span>
                       </TableCell>
-                      <TableCell className="pr-6 text-right">
+                      <TableCell className="pr-6 text-right flex items-center justify-end gap-1">
+                        <Link href={`/admin/users/${u.id}`}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-amber-400 hover:text-amber-300 hover:bg-amber-950/20"
+                            title="Xem chi tiết"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </Link>
                         {u.role !== "ADMIN" && (
                           <Button
                             variant="ghost"

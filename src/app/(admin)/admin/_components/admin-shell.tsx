@@ -18,6 +18,8 @@ import {
   CreditCard,
   FileText,
   Settings,
+  RotateCcw,
+  Layout,
   Menu,
   Flame,
   LogOut,
@@ -29,10 +31,12 @@ import { logger } from "@/lib/logger";
 const adminIconMap: Record<string, React.ElementType> = {
   LayoutDashboard,
   ShoppingBag,
+  RotateCcw,
   Package,
   Users,
   Receipt,
   CreditCard,
+  Layout,
   FileText,
   Settings,
 };

@@ -151,6 +151,7 @@ export const ADMIN_NAV = [
   { label: "Khách hàng", href: "/admin/users", icon: "Users" },
   { label: "Giao dịch ví", href: "/admin/wallet/transactions", icon: "Receipt" },
   { label: "Nạp tiền", href: "/admin/deposits", icon: "CreditCard" },
+  { label: "Trang tĩnh", href: "/admin/pages", icon: "Layout" },
   { label: "Audit Log", href: "/admin/audit-logs", icon: "FileText" },
   { label: "Cài đặt", href: "/admin/settings", icon: "Settings" },
 ] as const;
