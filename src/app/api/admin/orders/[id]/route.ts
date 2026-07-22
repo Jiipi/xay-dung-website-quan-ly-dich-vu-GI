@@ -176,12 +176,12 @@ export async function PATCH(
       });
 
       if (existingTx && order.amount > 0) {
-        // Cộng lại tiền vào ví người dùng
-        const userAfterRefund = await db.user.update({
-          where: { id: order.userId },
-          data: { balance: { increment: order.amount } },
-          select: { balance: true },
+        const agg = await db.walletTransaction.aggregate({
+          where: { userId: order.userId, status: "success" },
+          _sum: { amount: true },
         });
+        const currentBal = agg._sum.amount ?? 0;
+        const newBal = currentBal + order.amount;
 
         // Tạo giao dịch Hoàn tiền trong ví
         await db.walletTransaction.create({
@@ -190,7 +190,7 @@ export async function PATCH(
             orderId: id,
             type: "refund",
             amount: order.amount,
-            balance: userAfterRefund.balance,
+            balance: newBal,
             description: `Hoàn tiền tự động cho đơn hàng ${order.orderNumber} (Đã hủy đơn)`,
             status: "success",
           },
