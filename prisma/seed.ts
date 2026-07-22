@@ -77,6 +77,17 @@ async function main() {
   });
 
   // Tạo Admin mẫu
+  const hungAdminPassHash = await bcrypt.hash("12345678", 10);
+  await prisma.user.create({
+    data: {
+      id: "admin-hung",
+      name: "Admin Hùng",
+      email: "hungmegame.it@gmail.com",
+      password: hungAdminPassHash,
+      role: "ADMIN",
+    },
+  });
+
   await prisma.user.create({
     data: {
       id: "admin-1",
