@@ -7,6 +7,12 @@ import { notifyDepositCompleted } from "@/lib/notifications/telegram";
 
 export async function POST(request: Request) {
   try {
+    if (process.env.NODE_ENV === "production") {
+      return NextResponse.json(
+        { error: "Tính năng giả lập bị khóa ở môi trường Production" },
+        { status: 403 }
+      );
+    }
     const cookieStore = await cookies();
     const token = cookieStore.get("token")?.value;
 

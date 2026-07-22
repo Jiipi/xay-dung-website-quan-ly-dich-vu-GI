@@ -136,31 +136,6 @@ export default function CustomerDepositPage() {
     }
   };
 
-  const handleSimulateDevDeposit = async () => {
-    if (!qrDetails) return;
-    setLoading(true);
-    try {
-      const res = await fetch("/api/deposits/simulate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ paymentIntentId: qrDetails.id }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        toast.success(data.message || "Giả lập nạp tiền tự động thành công!");
-        fetchBalance();
-        setQrDetails(null);
-        setAmount("");
-      } else {
-        toast.error(data.error || "Giả lập nạp tiền thất bại");
-      }
-    } catch {
-      toast.error("Lỗi khi kết nối tới API giả lập");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleResetIntent = () => {
     setQrDetails(null);
     setAmount("");
@@ -389,23 +364,6 @@ export default function CustomerDepositPage() {
                   <span className="text-[11px] text-slate-600 font-semibold uppercase tracking-wider">
                     Đang đợi thanh toán...
                   </span>
-                </div>
-
-                <div className="w-full mt-3 pt-3 border-t border-slate-200">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleSimulateDevDeposit}
-                    disabled={loading}
-                    className="w-full text-xs gap-1.5 border-emerald-500/40 text-emerald-600 hover:bg-emerald-500/10 font-bold"
-                  >
-                    {loading ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      "⚡ Giả lập nạp tiền tự động (Dev Test)"
-                    )}
-                  </Button>
                 </div>
               </div>
             ) : (
