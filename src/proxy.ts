@@ -155,20 +155,7 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  // Nếu đã login mà vào trang auth → redirect về home của role
-  const isAuthPage =
-    PUBLIC_AUTH_ROUTES.some(
-      (r) => pathname === r || pathname.startsWith(`${r}/`),
-    ) || pathname === "/admin/login";
-
-  if (isAuthPage) {
-    const user = await readToken(request);
-    if (user) {
-      return NextResponse.redirect(
-        new URL(homeForRole(user.role), request.url),
-      );
-    }
-  }
+  // Allow access to auth pages (/login, /register, etc.) freely
 
   // ----- 2) CSP nonce cho HTML responses -----
   const isHtml =
