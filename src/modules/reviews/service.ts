@@ -71,7 +71,7 @@ export async function createReview(
   if (order.userId !== userId) {
     throw new ForbiddenError("Bạn không có quyền đánh giá đơn hàng này");
   }
-  if (order.status !== "completed") {
+  if (order.status !== "completed" && order.status !== "COMPLETED") {
     throw new ConflictError("Chỉ có thể đánh giá đơn hàng đã hoàn tất");
   }
   if (order.review) {

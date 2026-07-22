@@ -38,6 +38,9 @@ export async function GET(
         statusLogs: {
           orderBy: { createdAt: "desc" },
         },
+        review: {
+          select: { id: true, rating: true, content: true, createdAt: true },
+        },
       },
     });
 
@@ -58,6 +61,12 @@ export async function GET(
       uid: order.uid,
       server: order.server,
       note: order.note || "",
+      review: order.review ? {
+        id: order.review.id,
+        rating: order.review.rating,
+        content: order.review.content,
+        createdAt: order.review.createdAt.toISOString(),
+      } : null,
       createdAt: order.createdAt.toISOString(),
       statusLogs: order.statusLogs.map((l) => ({
         id: l.id,

@@ -16,6 +16,8 @@ import {
   ShieldCheck,
   CheckCircle,
   Loader2,
+  Star,
+  RotateCcw,
 } from "lucide-react";
 import { formatCurrency, formatDate, type OrderStatus } from "@/lib/constants";
 import type { OrderMessage } from "@/lib/types";
@@ -30,7 +32,6 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { RotateCcw } from "lucide-react";
 
 interface OrderDetail {
   id: string;
@@ -43,6 +44,12 @@ interface OrderDetail {
   server: string;
   note: string;
   resultImages?: string[];
+  review?: {
+    id: string;
+    rating: number;
+    content: string;
+    createdAt: string;
+  } | null;
   createdAt: string;
   statusLogs: {
     id: string;
@@ -69,6 +76,52 @@ export default function CustomerOrderDetailPage() {
   const [refundReason, setRefundReason] = useState("Dịch vụ chậm trễ");
   const [refundDescription, setRefundDescription] = useState("");
   const [submittingRefund, setSubmittingRefund] = useState(false);
+
+  // Review Modal State
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewContent, setReviewContent] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
+
+  const handleSubmitReview = async () => {
+    if (!order) return;
+    if (!reviewContent.trim() || reviewContent.trim().length < 10) {
+      toast.error("Nội dung đánh giá cần tối thiểu 10 ký tự");
+      return;
+    }
+    try {
+      setSubmittingReview(true);
+      const res = await fetch("/api/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderId: order.id,
+          rating: reviewRating,
+          content: reviewContent.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Đã gửi đánh giá thành công! Cảm ơn ý kiến của bạn.");
+        setOrder({
+          ...order,
+          review: {
+            id: data.review.id,
+            rating: reviewRating,
+            content: reviewContent.trim(),
+            createdAt: new Date().toISOString(),
+          },
+        });
+        setReviewModalOpen(false);
+      } else {
+        toast.error(data.error || "Không thể gửi đánh giá");
+      }
+    } catch {
+      toast.error("Lỗi kết nối máy chủ");
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
 
   const handleCreateRefundRequest = async () => {
     if (!order) return;
@@ -199,15 +252,35 @@ export default function CustomerOrderDetailPage() {
           </div>
         </div>
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setRefundModalOpen(true)}
-          className="border-red-500/30 text-red-500 hover:bg-red-500/10 text-xs gap-1.5"
-        >
-          <RotateCcw className="w-3.5 h-3.5" />
-          Gửi khiếu nại / Hoàn tiền
-        </Button>
+        <div className="flex items-center gap-2">
+          {((order.status as string) === "completed" || (order.status as string) === "COMPLETED") && (
+            order.review ? (
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold">
+                <CheckCircle className="w-3.5 h-3.5" />
+                Đã đánh giá ({order.review.rating}/5 ⭐)
+              </div>
+            ) : (
+              <Button
+                size="sm"
+                onClick={() => setReviewModalOpen(true)}
+                className="bg-amber-500 hover:bg-amber-600 text-black font-bold text-xs gap-1.5 shadow-sm"
+              >
+                <Star className="w-4 h-4 fill-black" />
+                Đánh giá dịch vụ
+              </Button>
+            )
+          )}
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setRefundModalOpen(true)}
+            className="border-red-500/30 text-red-500 hover:bg-red-500/10 text-xs gap-1.5"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            Gửi khiếu nại / Hoàn tiền
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -437,6 +510,81 @@ export default function CustomerOrderDetailPage() {
             </Button>
             <Button onClick={handleCreateRefundRequest} disabled={submittingRefund} className="font-bold">
               {submittingRefund ? "Đang gửi..." : "Gửi yêu cầu ngay"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Đánh Giá Dịch Vụ */}
+      <Dialog open={reviewModalOpen} onOpenChange={setReviewModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
+              Đánh giá dịch vụ đơn #{order.orderNumber}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div>
+              <Label className="text-xs font-semibold block mb-2 text-center">
+                Mức độ hài lòng của bạn:
+              </Label>
+              <div className="flex justify-center items-center gap-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setReviewRating(star)}
+                    className="p-1.5 transition-transform hover:scale-125 focus:outline-none"
+                  >
+                    <Star
+                      className={`h-8 w-8 ${
+                        star <= reviewRating
+                          ? "text-amber-400 fill-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]"
+                          : "text-slate-600"
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+              <p className="text-center text-xs font-bold text-amber-400 mt-2">
+                {reviewRating === 5 && "🤩 Cực kỳ hài lòng (5/5 ⭐)"}
+                {reviewRating === 4 && "😊 Dịch vụ rất tốt (4/5 ⭐)"}
+                {reviewRating === 3 && "😐 Bình thường (3/5 ⭐)"}
+                {reviewRating === 2 && "🙁 Chưa hài lòng (2/5 ⭐)"}
+                {reviewRating === 1 && "😡 Dịch vụ rất kém (1/5 ⭐)"}
+              </p>
+            </div>
+
+            <div>
+              <Label className="text-xs font-semibold block mb-1.5">
+                Nhận xét của bạn (Tối thiểu 10 ký tự):
+              </Label>
+              <Textarea
+                placeholder="Nhập cảm nhận của bạn về thái độ phục vụ của Booster, tốc độ hoàn thành đơn..."
+                value={reviewContent}
+                onChange={(e) => setReviewContent(e.target.value)}
+                rows={4}
+                className="text-xs bg-background border-border/80"
+              />
+            </div>
+
+            <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg text-blue-400 text-xs">
+              💡 Nhận xét của bạn giúp cộng đồng game thủ biết tới chất lượng cày thuê tại Genshin77.
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReviewModalOpen(false)} disabled={submittingReview}>
+              Hủy
+            </Button>
+            <Button
+              onClick={handleSubmitReview}
+              disabled={submittingReview}
+              className="bg-amber-500 hover:bg-amber-600 text-black font-bold"
+            >
+              {submittingReview ? <Loader2 className="h-4 w-4 animate-spin" /> : "Gửi đánh giá ngay"}
             </Button>
           </DialogFooter>
         </DialogContent>
