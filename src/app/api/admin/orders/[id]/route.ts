@@ -159,6 +159,54 @@ export async function PATCH(
       data: { status },
     });
 
+    // Xử lý biến động ví khi hoàn thành hoặc hủy đơn
+    if (status === "completed" || status === "COMPLETED") {
+      // Chuyển giao dịch tạm giữ (hold) sang thanh toán chính thức (charge)
+      await db.walletTransaction.updateMany({
+        where: { orderId: id, type: "hold" },
+        data: {
+          type: "charge",
+          description: `Thanh toán cho đơn hàng ${order.orderNumber} (Đã hoàn thành)`,
+        },
+      });
+    } else if (status === "cancelled" || status === "CANCELLED" || status === "refunded") {
+      // Nếu hủy đơn, kiểm tra xem có giao dịch tạm giữ/thanh toán nào để hoàn tiền không
+      const existingTx = await db.walletTransaction.findFirst({
+        where: { orderId: id, type: { in: ["hold", "charge"] } },
+      });
+
+      if (existingTx && order.amount > 0) {
+        // Cộng lại tiền vào ví người dùng
+        const userAfterRefund = await db.user.update({
+          where: { id: order.userId },
+          data: { balance: { increment: order.amount } },
+          select: { balance: true },
+        });
+
+        // Tạo giao dịch Hoàn tiền trong ví
+        await db.walletTransaction.create({
+          data: {
+            userId: order.userId,
+            orderId: id,
+            type: "refund",
+            amount: order.amount,
+            balance: userAfterRefund.balance,
+            description: `Hoàn tiền tự động cho đơn hàng ${order.orderNumber} (Đã hủy đơn)`,
+            status: "success",
+          },
+        });
+
+        // Đánh dấu giao dịch tạm giữ cũ đã được hoàn trả
+        await db.walletTransaction.updateMany({
+          where: { orderId: id, type: "hold" },
+          data: {
+            type: "refunded",
+            description: `Hoàn trả tạm giữ tiền cho đơn hàng ${order.orderNumber}`,
+          },
+        });
+      }
+    }
+
     // Thêm lịch sử thay đổi trạng thái
     await db.orderStatusLog.create({
       data: {

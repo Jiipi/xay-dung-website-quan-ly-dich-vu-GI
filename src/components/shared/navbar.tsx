@@ -81,16 +81,31 @@ export function Navbar() {
     };
   }, [pathname]);
 
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (user) {
+      fetch("/api/notifications")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.unreadCount !== undefined) {
+            setUnreadCount(data.unreadCount);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [user]);
+
   const handleLogout = async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
+      setUser(null);
+      toast.success("Đã đăng xuất");
+      router.push("/");
+      router.refresh();
     } catch {
-      /* ignore */
+      toast.error("Lỗi khi đăng xuất");
     }
-    setUser(null);
-    setMobileOpen(false);
-    router.refresh();
-    router.push("/");
   };
 
   const isCustomer = user?.role === "CUSTOMER";
@@ -182,6 +197,25 @@ export function Navbar() {
                   <LogOut className="h-4 w-4" />
                 </Button>
               </>
+            )}
+
+            {user && (
+              <Link
+                href="/dashboard/notifications"
+                className={cn(
+                  buttonVariants({ variant: "ghost", size: "icon" }),
+                  "relative h-9 w-9"
+                )}
+                title="Thông báo"
+              >
+                <Bell className="h-4 w-4 text-foreground" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-1 right-1 flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
+                  </span>
+                )}
+              </Link>
             )}
 
             {isCustomer && (

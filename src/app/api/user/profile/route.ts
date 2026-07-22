@@ -17,18 +17,22 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "Hết hạn phiên đăng nhập" }, { status: 401 });
     }
 
-    const { name } = await request.json();
+    const { name, avatarUrl } = await request.json();
 
-    if (!name) {
+    const updateData: { name?: string; avatarUrl?: string | null } = {};
+    if (name && name.trim()) updateData.name = name.trim();
+    if (avatarUrl !== undefined) updateData.avatarUrl = avatarUrl;
+
+    if (Object.keys(updateData).length === 0) {
       return NextResponse.json(
-        { error: "Vui lòng nhập họ tên" },
+        { error: "Không có thông tin cần thay đổi" },
         { status: 400 }
       );
     }
 
     const updatedUser = await db.user.update({
       where: { id: payload.userId },
-      data: { name },
+      data: updateData,
       select: {
         id: true,
         name: true,

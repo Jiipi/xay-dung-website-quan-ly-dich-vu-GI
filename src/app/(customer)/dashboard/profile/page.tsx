@@ -13,13 +13,14 @@ export default function CustomerProfilePage() {
   const [profileName, setProfileName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [passwordLoading] = useState(false);
+  const [passwordLoading, setPasswordLoading] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -30,6 +31,7 @@ export default function CustomerProfilePage() {
           setProfileName(data.user.name);
           setEmail(data.user.email);
           setRole(data.user.role);
+          setAvatarUrl(data.user.avatarUrl || null);
         }
       } catch (err) {
         console.error("Lỗi lấy thông tin profile:", err);
@@ -53,14 +55,13 @@ export default function CustomerProfilePage() {
       const res = await fetch("/api/user/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: profileName }),
+        body: JSON.stringify({ name: profileName, avatarUrl }),
       });
 
       const data = await res.json();
 
       if (data.success) {
-        toast.success("Cập nhật họ tên thành công!");
-        // Refresh page to update sidebar
+        toast.success("Cập nhật thông tin thành công!");
         window.location.reload();
       } else {
         toast.error(data.error || "Không thể cập nhật hồ sơ");
@@ -73,10 +74,73 @@ export default function CustomerProfilePage() {
     }
   };
 
-  const handleChangePassword = (e: React.FormEvent) => {
-    e.preventDefault();
-    toast.error("Chức năng đổi mật khẩu đang được bảo trì!");
+  const handleSelectAvatar = async (url: string) => {
+    setAvatarUrl(url);
+    try {
+      const res = await fetch("/api/user/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ avatarUrl: url }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Đã cập nhật ảnh đại diện mới!");
+      }
+    } catch {
+      toast.error("Lỗi cập nhật ảnh đại diện");
+    }
   };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentPassword) {
+      toast.error("Vui lòng nhập mật khẩu hiện tại");
+      return;
+    }
+    if (!newPassword || newPassword.length < 6) {
+      toast.error("Mật khẩu mới tối thiểu 6 ký tự");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error("Mật khẩu mới và mật khẩu xác nhận không trùng khớp");
+      return;
+    }
+
+    setPasswordLoading(true);
+
+    try {
+      const res = await fetch("/api/user/password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        toast.success("Cập nhật mật khẩu mới thành công!");
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+      } else {
+        toast.error(data.error || "Không thể đổi mật khẩu");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Lỗi hệ thống khi đổi mật khẩu");
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
+  const AVATAR_PRESETS = [
+    { label: "Raiden Shogun", url: "https://images.unsplash.com/photo-1578632767115-351597cf2477?w=150&auto=format&fit=crop&q=80" },
+    { label: "Zhongli", url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150&auto=format&fit=crop&q=80" },
+    { label: "Furina", url: "https://images.unsplash.com/photo-1563089145-599997674d42?w=150&auto=format&fit=crop&q=80" },
+    { label: "Nahida", url: "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=150&auto=format&fit=crop&q=80" },
+    { label: "Hu Tao", url: "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=150&auto=format&fit=crop&q=80" },
+    { label: "Kazuha", url: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=150&auto=format&fit=crop&q=80" },
+  ];
 
   if (pageLoading) {
     return (
@@ -92,7 +156,7 @@ export default function CustomerProfilePage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Hồ sơ cá nhân</h1>
         <p className="text-muted-foreground text-sm">
-          Quản lý thông tin tài khoản web của bạn và thay đổi mật khẩu đăng nhập.
+          Quản lý thông tin tài khoản web của bạn, ảnh đại diện và thay đổi mật khẩu đăng nhập.
         </p>
       </div>
 
@@ -101,15 +165,45 @@ export default function CustomerProfilePage() {
         <div className="md:col-span-1 space-y-6">
           <Card className="border-border/50 text-center">
             <CardContent className="p-6 flex flex-col items-center">
-              <Avatar className="h-24 w-24 mb-4">
-                <AvatarFallback className="bg-primary/10 text-primary text-2xl font-bold">
-                  {profileName.charAt(0) || "U"}
-                </AvatarFallback>
-              </Avatar>
+              <div className="relative group mb-3">
+                <Avatar className="h-24 w-24 border-2 border-primary/20 shadow-md">
+                  {avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={avatarUrl} alt={profileName} className="h-full w-full object-cover" />
+                  ) : (
+                    <AvatarFallback className="bg-primary/10 text-primary text-2xl font-bold">
+                      {profileName.charAt(0) || "U"}
+                    </AvatarFallback>
+                  )}
+                </Avatar>
+              </div>
               <h3 className="font-bold text-lg">{profileName}</h3>
               <p className="text-xs text-muted-foreground mt-1">{email}</p>
 
-              <div className="mt-6 flex flex-col gap-2 w-full">
+              {/* Select Avatar Preset */}
+              <div className="mt-5 w-full space-y-2 border-t pt-4 border-border/50">
+                <Label className="text-xs font-semibold text-muted-foreground block text-left">
+                  Chọn ảnh đại diện Avatar:
+                </Label>
+                <div className="grid grid-cols-3 gap-2">
+                  {AVATAR_PRESETS.map((item, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => handleSelectAvatar(item.url)}
+                      className={`relative rounded-lg overflow-hidden border-2 aspect-square transition-all hover:scale-105 ${
+                        avatarUrl === item.url ? "border-amber-500 ring-2 ring-amber-500/30" : "border-border/60 hover:border-primary"
+                      }`}
+                      title={item.label}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={item.url} alt={item.label} className="h-full w-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-5 flex flex-col gap-2 w-full border-t pt-3 border-border/50">
                 <span className="text-xs text-muted-foreground uppercase font-bold tracking-wider">
                   Cấp bậc tài khoản
                 </span>
@@ -157,6 +251,7 @@ export default function CustomerProfilePage() {
                     value={profileName}
                     onChange={(e) => setProfileName(e.target.value)}
                     required
+                    className="bg-background border-border/80"
                   />
                 </div>
 
@@ -173,7 +268,7 @@ export default function CustomerProfilePage() {
           </Card>
 
           {/* Change Password */}
-          <Card className="border-border/50">
+          <Card className="border-border/50 shadow-sm">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <KeyRound className="h-4 w-4 text-primary" /> Đổi mật khẩu
@@ -189,9 +284,11 @@ export default function CustomerProfilePage() {
                   <Input
                     id="current-password"
                     type="password"
+                    placeholder="Nhập mật khẩu hiện tại"
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
                     required
+                    className="bg-background border-border/80 text-foreground"
                   />
                 </div>
 
@@ -201,9 +298,11 @@ export default function CustomerProfilePage() {
                     <Input
                       id="new-password"
                       type="password"
+                      placeholder="Tối thiểu 6 ký tự"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       required
+                      className="bg-background border-border/80 text-foreground"
                     />
                   </div>
                   <div className="space-y-2">
@@ -211,14 +310,17 @@ export default function CustomerProfilePage() {
                     <Input
                       id="confirm-password"
                       type="password"
+                      placeholder="Nhập lại mật khẩu mới"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       required
+                      className="bg-background border-border/80 text-foreground"
                     />
                   </div>
                 </div>
 
-                <Button type="submit" size="sm" variant="outline" disabled={passwordLoading}>
+                <Button type="submit" size="sm" variant="default" disabled={passwordLoading} className="bg-primary hover:bg-primary/90">
+                  {passwordLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Cập nhật mật khẩu
                 </Button>
               </form>
