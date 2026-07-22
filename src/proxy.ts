@@ -50,6 +50,8 @@ function buildCspHeader(nonce: string): string {
       "https://*.supabase.co",
       "https://api.vietqr.io",
       "https://img.vietqr.io",
+      "https://*.vietqr.io",
+      "https://api.qrserver.com",
       "https://*.payos.vn",
     ],
     "font-src": ["'self'", "https://fonts.gstatic.com", "data:"],
