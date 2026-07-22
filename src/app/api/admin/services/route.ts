@@ -111,3 +111,71 @@ export async function POST(request: Request) {
     );
   }
 }
+
+// PATCH: Cập nhật thông tin hoặc Khóa / Mở khóa dịch vụ
+export async function PATCH(request: Request) {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("token")?.value;
+
+    if (!token) {
+      return NextResponse.json({ error: "Chưa đăng nhập" }, { status: 401 });
+    }
+
+    const payload = await verifyToken(token);
+    if (!payload || payload.role !== "ADMIN") {
+      return NextResponse.json({ error: "Từ chối truy cập" }, { status: 403 });
+    }
+
+    const admin = await db.user.findUnique({
+      where: { id: payload.userId },
+      select: { id: true, name: true },
+    });
+
+    const body = await request.json();
+    const { id, isActive, name, category, description, imageUrl } = body;
+
+    if (!id) {
+      return NextResponse.json({ error: "Thiếu ID dịch vụ" }, { status: 400 });
+    }
+
+    const updateData: Record<string, unknown> = {};
+    if (typeof isActive === "boolean") updateData.isActive = isActive;
+    if (name) updateData.name = name;
+    if (category) updateData.category = category;
+    if (typeof description === "string") updateData.description = description;
+    if (typeof imageUrl === "string") updateData.imageUrl = imageUrl;
+
+    const updatedService = await db.service.update({
+      where: { id },
+      data: updateData,
+      include: { priceOptions: true },
+    });
+
+    // Audit log
+    if (admin) {
+      await db.adminAuditLog.create({
+        data: {
+          adminId: admin.id,
+          adminName: admin.name,
+          action: typeof isActive === "boolean" ? (isActive ? "UNLOCK_SERVICE" : "LOCK_SERVICE") : "UPDATE_SERVICE",
+          target: updatedService.name,
+          details: `Dịch vụ [${updatedService.name}] đã được ${typeof isActive === "boolean" ? (isActive ? "mở khóa" : "khóa tạm thời") : "cập nhật thông tin"}`,
+          ipAddress: request.headers.get("x-forwarded-for") || "127.0.0.1",
+        },
+      });
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: `Đã ${updatedService.isActive ? "mở khóa" : "khóa"} dịch vụ ${updatedService.name}!`,
+      service: updatedService,
+    });
+  } catch (error) {
+    console.error("Lỗi cập nhật dịch vụ:", error);
+    return NextResponse.json(
+      { error: "Không thể cập nhật dịch vụ" },
+      { status: 500 }
+    );
+  }
+}

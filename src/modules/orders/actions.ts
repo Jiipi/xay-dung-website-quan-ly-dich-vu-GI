@@ -71,8 +71,8 @@ export async function createOrderAction(params: CreateOrderParams) {
       },
     });
 
-    if (!service || service.priceOptions.length === 0) {
-      return { error: "Gói dịch vụ hoặc tùy chọn giá không tồn tại" };
+    if (!service || !service.isActive || service.priceOptions.length === 0) {
+      return { error: "Dịch vụ này hiện đang bị khóa hoặc tạm dừng nhận đơn!" };
     }
 
     const priceOption = service.priceOptions[0];

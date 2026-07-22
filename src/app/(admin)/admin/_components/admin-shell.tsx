@@ -22,6 +22,7 @@ import {
   Layout,
   Menu,
   Flame,
+  Globe,
   LogOut,
   ChevronLeft,
 } from "lucide-react";
@@ -110,7 +111,19 @@ function AdminSidebarContent({
 
       <Separator className="bg-slate-800" />
 
-      <div className="p-2">
+      <div className="p-2 space-y-1">
+        <Link
+          href="/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className={cn(
+            "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-amber-400 hover:bg-amber-500/10 transition-colors w-full",
+            collapsed && "justify-center px-2",
+          )}
+        >
+          <Globe className="h-5 w-5 shrink-0" />
+          {!collapsed && <span>Xem Website</span>}
+        </Link>
         <button
           onClick={onLogout}
           className={cn(
@@ -215,16 +228,27 @@ export function AdminShell({
               Hệ thống quản trị
             </h2>
           </div>
-          <div className="flex items-center gap-4">
-            <span className="text-xs text-slate-400 bg-slate-900 px-2 py-1 rounded border border-slate-800">
-              Chế độ Bảo mật cao
-            </span>
-            <Avatar className="h-8 w-8 border border-slate-700">
-              <AvatarFallback className="bg-amber-500/10 text-amber-500 text-xs font-semibold">
-                {adminName.charAt(0)}
-              </AvatarFallback>
-            </Avatar>
-          </div>
+            <div className="flex items-center gap-3">
+              <Link href="/" target="_blank" rel="noopener noreferrer">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 text-xs border-amber-500/30 text-amber-400 hover:bg-amber-500/10 font-bold"
+                >
+                  <Globe className="h-4 w-4" />
+                  <span className="hidden sm:inline">Quay lại trang chủ</span>
+                </Button>
+              </Link>
+
+              <span className="text-xs text-slate-400 bg-slate-900 px-2 py-1 rounded border border-slate-800 hidden md:inline-block">
+                Chế độ Bảo mật cao
+              </span>
+              <Avatar className="h-8 w-8 border border-slate-700">
+                <AvatarFallback className="bg-amber-500/10 text-amber-500 text-xs font-semibold">
+                  {adminName.charAt(0)}
+                </AvatarFallback>
+              </Avatar>
+            </div>
         </header>
 
         <main className="flex-1 overflow-y-auto p-4 lg:p-6 scrollbar-thin">

@@ -17,7 +17,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Edit, Trash2, Search, Loader2 } from "lucide-react";
+import { Plus, Edit, Trash2, Search, Loader2, Lock, Unlock } from "lucide-react";
 import { formatCurrency, SERVICE_CATEGORIES } from "@/lib/constants";
 
 interface PriceOption {
@@ -66,10 +66,34 @@ export default function AdminServicesCRUDPage() {
   };
 
   useEffect(() => {
-    // Fetch khi mount (pattern client hợp lệ; fix triệt để = Server Component, P2-8).
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchServices();
   }, []);
+
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+
+  const handleToggleLock = async (id: string, currentIsActive: boolean) => {
+    setTogglingId(id);
+    try {
+      const res = await fetch("/api/admin/services", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, isActive: !currentIsActive }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setServices((prev) =>
+          prev.map((s) => (s.id === id ? { ...s, isActive: !currentIsActive } : s))
+        );
+        toast.success(data.message || `Đã ${!currentIsActive ? "mở khóa" : "khóa"} dịch vụ!`);
+      } else {
+        toast.error(data.error || "Không thể khóa/mở khóa dịch vụ");
+      }
+    } catch {
+      toast.error("Lỗi kết nối máy chủ");
+    } finally {
+      setTogglingId(null);
+    }
+  };
 
   const handleOpenAddDialog = () => {
     setEditingService(null);
@@ -215,30 +239,49 @@ export default function AdminServicesCRUDPage() {
                       </TableCell>
                       <TableCell>
                         <span className={`inline-flex items-center gap-1 text-[11px] font-semibold ${
-                          s.isActive ? "text-emerald-500" : "text-slate-500"
+                          s.isActive ? "text-emerald-500" : "text-rose-400 bg-rose-950/40 px-2 py-0.5 rounded border border-rose-800/50"
                         }`}>
                           <span className={`h-1.5 w-1.5 rounded-full ${
-                            s.isActive ? "bg-emerald-500 animate-pulse" : "bg-slate-600"
+                            s.isActive ? "bg-emerald-500 animate-pulse" : "bg-rose-500"
                           }`} />
-                          {s.isActive ? "Hiển thị" : "Đã ẩn"}
+                          {s.isActive ? "Đang mở nhận đơn" : "🔒 Đã khóa dịch vụ"}
                         </span>
                       </TableCell>
                       <TableCell className="pr-6 text-right">
                         <div className="flex justify-end gap-1">
                           <Button
                             variant="ghost"
-                            size="icon"
-                            onClick={() => handleOpenEditDialog(s)}
-                            className="h-8 w-8 text-slate-400 hover:text-slate-200 hover:bg-slate-900"
+                            size="sm"
+                            disabled={togglingId === s.id}
+                            onClick={() => handleToggleLock(s.id, s.isActive)}
+                            title={s.isActive ? "Khóa dịch vụ này (chặn khách đặt)" : "Mở khóa dịch vụ này"}
+                            className={`h-8 px-2 text-xs gap-1 font-bold ${
+                              s.isActive
+                                ? "text-rose-400 hover:text-rose-300 hover:bg-rose-950/20"
+                                : "text-emerald-400 hover:text-emerald-300 hover:bg-emerald-950/20"
+                            }`}
                           >
-                            <Edit className="h-4 w-4" />
+                            {togglingId === s.id ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : s.isActive ? (
+                              <>
+                                <Lock className="h-3.5 w-3.5" /> Khóa
+                              </>
+                            ) : (
+                              <>
+                                <Unlock className="h-3.5 w-3.5" /> Mở khóa
+                              </>
+                            )}
                           </Button>
+
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-rose-400 hover:text-rose-300 hover:bg-rose-950/20"
+                            onClick={() => handleOpenEditDialog(s)}
+                            className="h-8 w-8 text-slate-400 hover:text-slate-200 hover:bg-slate-900"
+                            title="Chỉnh sửa dịch vụ"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Edit className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>
