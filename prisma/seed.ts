@@ -141,8 +141,10 @@ async function main() {
       imageUrl: "/services/spiral_abyss.png",
       priceOptions: {
         create: [
-          { id: "opt-1a", name: "Full 36★", price: 150000, originalPrice: 200000 },
-          { id: "opt-1b", name: "Từ 33★ lên 36★", price: 80000 },
+          { id: "opt-1a", name: "Trọn gói La Hoàn 36★", price: 20000 },
+          { id: "opt-1b", name: "Đi lẻ Tầng 10", price: 10000 },
+          { id: "opt-1c", name: "Đi lẻ Tầng 11", price: 10000 },
+          { id: "opt-1d", name: "Đi lẻ Tầng 12", price: 10000 },
         ],
       },
     },
@@ -153,44 +155,43 @@ async function main() {
     data: {
       id: "svc-2",
       name: "Nhà Hát Giả Tưởng",
-      description: "Hoàn thành Nhà Hát Giả Tưởng ở độ khó Siêu Khó, lấy hết reward.",
+      description: "Hoàn thành Nhà Hát Giả Tưởng, lấy trọn vẹn phần thưởng.",
       categoryId: "endgame",
       difficulty: "Khó",
       estimatedTime: "1-3 giờ",
       imageUrl: "/services/imaginarium_theater.png",
       priceOptions: {
         create: [
-          { id: "opt-2a", name: "Siêu Khó", price: 120000 },
-          { id: "opt-2b", name: "Khó", price: 70000 },
+          { id: "opt-2a", name: "Trọn gói Nhà Hát Giả Tưởng", price: 50000 },
         ],
       },
     },
   });
 
-  // Dịch vụ mới 1: Đánh hộ ảo cảnh genshin 1 tới 6 (Imaginarium Theater Stages 1-6)
+  // Dịch vụ 3: Ảo cảnh (Imaginarium Theater Stages)
   await prisma.service.create({
     data: {
       id: "svc-3",
-      name: "Đánh Hộ Ảo Cảnh (Màn 1 -> 6)",
-      description: "Vượt ải Ảo Cảnh Kịch Kịch (Imaginarium Theater) từ màn 1 đến màn 6 nhanh chóng, nhận trọn vẹn phần thưởng Nguyên Thạch.",
+      name: "Đánh Hộ Ảo Cảnh",
+      description: "Vượt ải Ảo Cảnh Kịch Kịch nhanh chóng, nhận trọn vẹn phần thưởng Nguyên Thạch.",
       categoryId: "endgame",
       difficulty: "Trung bình",
       estimatedTime: "1 giờ",
       imageUrl: "/services/ao_canh_hiem_ac.png",
       priceOptions: {
         create: [
-          { id: "opt-3a", name: "Trọn gói màn 1 -> 6", price: 90000 },
+          { id: "opt-3a", name: "Ảo Cảnh (50k / 1 level)", price: 50000 },
         ],
       },
     },
   });
 
-  // Dịch vụ mới 2: Roll hộ char và vũ khí
+  // Dịch vụ 4: Roll hộ char và vũ khí
   await prisma.service.create({
     data: {
       id: "svc-4",
       name: "Roll Hộ Nhân Vật & Vũ Khí",
-      description: "Dịch vụ ước nguyện (cầu nguyện) nhân vật và vũ khí giới hạn. Tư vấn tối ưu tài nguyên gacha.",
+      description: "Dịch vụ ước nguyện (cầu nguyện) nhân vật và vũ khí giới hạn hoàn toàn miễn phí. Tư vấn tối ưu tài nguyên gacha.",
       categoryId: "gacha",
       difficulty: "Dễ",
       estimatedTime: "15-30 phút",
@@ -198,33 +199,39 @@ async function main() {
       imageUrl: "/services/gacha_roll.png",
       priceOptions: {
         create: [
-          { id: "opt-4a", name: "Roll Nhân Vật", price: 50000 },
-          { id: "opt-4b", name: "Roll Vũ Khí", price: 40000 },
+          { id: "opt-4a", name: "Roll Hộ Nhân Vật", price: 0 },
+          { id: "opt-4b", name: "Roll Hộ Vũ Khí", price: 0 },
         ],
       },
     },
   });
 
-  // Dịch vụ 3 (được đánh số cũ)
+  // Dịch vụ 5: Farm thánh di vật
   await prisma.service.create({
     data: {
       id: "svc-5",
-      name: "Farm Thánh Di Vật (1 tuần)",
-      description: "Farm thánh di vật theo set được yêu cầu trong 7 ngày. Tối ưu resin hàng ngày.",
+      name: "Farm Thánh Di Vật",
+      description: "Farm thánh di vật theo set được yêu cầu. Tối ưu resin hàng ngày.",
       categoryId: "farm",
       difficulty: "Trung bình",
-      estimatedTime: "7-14 ngày",
+      estimatedTime: "1-7 ngày",
       imageUrl: "/services/artifact_farming.png",
       priceOptions: {
         create: [
-          { id: "opt-5a", name: "1 tuần", price: 80000 },
-          { id: "opt-5b", name: "2 tuần", price: 140000, originalPrice: 160000 },
+          { id: "opt-5-1d", name: "Farm 1 ngày", price: 10000 },
+          { id: "opt-5-2d", name: "Farm 2 ngày", price: 20000 },
+          { id: "opt-5-3d", name: "Farm 3 ngày", price: 30000 },
+          { id: "opt-5-4d", name: "Farm 4 ngày", price: 40000 },
+          { id: "opt-5-5d", name: "Farm 5 ngày", price: 50000 },
+          { id: "opt-5-6d", name: "Farm 6 ngày", price: 60000 },
+          { id: "opt-5-7d", name: "Farm 7 ngày (1 tuần)", price: 70000 },
+          { id: "opt-5-until", name: "Farm TDV tới khi ra món cần", price: 15000 },
         ],
       },
     },
   });
 
-  // Dịch vụ mới 3: Review acc nên lấy char gì vũ khí gì tiếp theo
+  // Dịch vụ 6: Review account
   await prisma.service.create({
     data: {
       id: "svc-6",
@@ -236,7 +243,7 @@ async function main() {
       imageUrl: "/services/account_review.png",
       priceOptions: {
         create: [
-          { id: "opt-6a", name: "Review Chi Tiết (Có file báo cáo)", price: 30000 },
+          { id: "opt-6a", name: "Review Account Chi Tiết", price: 5000 },
         ],
       },
     },
