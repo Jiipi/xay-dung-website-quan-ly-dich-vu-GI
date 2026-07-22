@@ -98,6 +98,22 @@ function OrderWizardContent() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    if (services.length > 0) {
+      const svcParam = searchParams.get("service") || "";
+      const optParam = searchParams.get("option") || "";
+
+      const targetSvc = services.find((s) => s.id === svcParam) || services[0];
+      if (targetSvc) {
+        setSelectedServiceId(targetSvc.id);
+        const targetOpt = targetSvc.priceOptions.find((o) => o.id === optParam) || targetSvc.priceOptions[0];
+        if (targetOpt) {
+          setSelectedOptionId(targetOpt.id);
+        }
+      }
+    }
+  }, [services, searchParams]);
+
   const selectedService = services.find((s) => s.id === selectedServiceId);
   const selectedOption = selectedService?.priceOptions.find(
     (opt) => opt.id === selectedOptionId
@@ -286,13 +302,22 @@ function OrderWizardContent() {
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label>Chọn dịch vụ game</Label>
-                    <Select value={selectedServiceId} onValueChange={(val) => {
-                      if (val) {
-                        setSelectedServiceId(val);
-                        setSelectedOptionId("");
-                      }
-                    }}>
-                      <SelectTrigger>
+                    <Select
+                      key={`select-svc-${selectedServiceId || "empty"}`}
+                      value={selectedServiceId}
+                      onValueChange={(val) => {
+                        if (val) {
+                          setSelectedServiceId(val);
+                          const newSvc = services.find((s) => s.id === val);
+                          if (newSvc && newSvc.priceOptions.length > 0) {
+                            setSelectedOptionId(newSvc.priceOptions[0].id);
+                          } else {
+                            setSelectedOptionId("");
+                          }
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="w-full">
                         <SelectValue placeholder="Bấm vào để chọn dịch vụ">
                           {selectedService ? selectedService.name : "Bấm vào để chọn dịch vụ"}
                         </SelectValue>
