@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -292,7 +293,9 @@ function OrderWizardContent() {
                       }
                     }}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Bấm vào để chọn dịch vụ" />
+                        <SelectValue placeholder="Bấm vào để chọn dịch vụ">
+                          {selectedService ? selectedService.name : "Bấm vào để chọn dịch vụ"}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         {services.map((s) => (
@@ -331,6 +334,28 @@ function OrderWizardContent() {
                             </span>
                           </div>
                         ))}
+                      </div>
+
+                      {/* Ghi chú & Yêu cầu cụ thể */}
+                      <div className="space-y-2 pt-3 border-t border-border/50">
+                        <Label htmlFor="wiz-note" className="flex items-center gap-1.5 font-semibold">
+                          <span>Ghi chú & Yêu cầu (Tên Nhân vật, Vũ khí, Lưu ý...)</span>
+                          <span className="text-xs text-muted-foreground font-normal">(Không bắt buộc)</span>
+                        </Label>
+                        <Textarea
+                          id="wiz-note"
+                          placeholder={
+                            selectedService.name.toLowerCase().includes("roll")
+                              ? "Ví dụ: Roll Banner Nhân vật Raiden Shogun hoặc Vũ khí Trảm Ma Tối Cường..."
+                              : "Nhập tên nhân vật, vũ khí, đội hình hoặc lưu ý đặc biệt dành cho Booster..."
+                          }
+                          value={note}
+                          onChange={(e) => setNote(e.target.value)}
+                          className="bg-background border-border/80 min-h-[80px] text-sm"
+                        />
+                        <p className="text-[11px] text-muted-foreground">
+                          💡 Điền tên Nhân vật / Vũ khí cần roll hoặc các yêu cầu riêng để Booster hỗ trợ tốt nhất.
+                        </p>
                       </div>
                     </div>
                   )}
@@ -566,6 +591,14 @@ function OrderWizardContent() {
                 <span className="text-muted-foreground">Gói cước</span>
                 <span className="font-medium text-right">{selectedOption?.name || "—"}</span>
               </div>
+              {note.trim() && (
+                <div className="flex flex-col gap-1 text-xs pt-1">
+                  <span className="text-muted-foreground font-medium">Ghi chú / Yêu cầu:</span>
+                  <p className="bg-muted/40 p-2 rounded border border-border/60 text-foreground font-normal break-words">
+                    {note.trim()}
+                  </p>
+                </div>
+              )}
               {(uid || server) && (
                 <div className="flex justify-between gap-3">
                   <span className="text-muted-foreground">UID / Server</span>
