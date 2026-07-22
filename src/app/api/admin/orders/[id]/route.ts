@@ -113,3 +113,86 @@ export async function GET(
     );
   }
 }
+
+// PATCH: Cập nhật trạng thái đơn hàng (Duyệt/Nhận cày, Hoàn thành, Hủy đơn)
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("token")?.value;
+
+    if (!token) {
+      return NextResponse.json({ error: "Chưa đăng nhập" }, { status: 401 });
+    }
+
+    const payload = await verifyToken(token);
+    if (!payload || payload.role !== "ADMIN") {
+      return NextResponse.json({ error: "Từ chối truy cập" }, { status: 403 });
+    }
+
+    const admin = await db.user.findUnique({
+      where: { id: payload.userId },
+      select: { id: true, name: true },
+    });
+
+    const { id } = await params;
+    const body = await request.json();
+    const { status } = body;
+
+    if (!status) {
+      return NextResponse.json({ error: "Thiếu trạng thái cập nhật" }, { status: 400 });
+    }
+
+    const order = await db.order.findUnique({
+      where: { id },
+      select: { id: true, orderNumber: true, status: true, userId: true, amount: true },
+    });
+
+    if (!order) {
+      return NextResponse.json({ error: "Đơn hàng không tồn tại" }, { status: 404 });
+    }
+
+    const updatedOrder = await db.order.update({
+      where: { id },
+      data: { status },
+    });
+
+    // Thêm lịch sử thay đổi trạng thái
+    await db.orderStatusLog.create({
+      data: {
+        orderId: id,
+        status: status,
+        note: `Admin ${admin?.name || "Hệ thống"} đã cập nhật trạng thái đơn sang [${status}]`,
+        createdBy: admin?.name || "ADMIN",
+      },
+    });
+
+    // Thêm Audit Log
+    if (admin) {
+      await db.adminAuditLog.create({
+        data: {
+          adminId: admin.id,
+          adminName: admin.name,
+          action: "UPDATE_ORDER_STATUS",
+          target: order.orderNumber,
+          details: `Đã đổi trạng thái đơn [${order.orderNumber}] từ [${order.status}] sang [${status}]`,
+          ipAddress: request.headers.get("x-forwarded-for") || "127.0.0.1",
+        },
+      });
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: `Đã cập nhật trạng thái đơn hàng sang ${status}`,
+      order: updatedOrder,
+    });
+  } catch (error) {
+    console.error("Lỗi cập nhật trạng thái đơn hàng:", error);
+    return NextResponse.json(
+      { error: "Không thể cập nhật trạng thái đơn hàng" },
+      { status: 500 }
+    );
+  }
+}

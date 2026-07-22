@@ -17,6 +17,9 @@ import {
   Key,
   AlertTriangle,
   Eye,
+  CheckCircle2,
+  XCircle,
+  ShieldCheck,
 } from "lucide-react";
 
 interface StatusLog {
@@ -160,11 +163,29 @@ export default function AdminOrderDetailPage({
   }
 
   const statusColorMap: Record<string, string> = {
+    waiting_admin_accept: "bg-amber-500/10 text-amber-400 border-amber-500/30",
+    pending_payment: "bg-amber-500/10 text-amber-400 border-amber-500/30",
     PENDING: "bg-amber-500/10 text-amber-400 border-amber-500/30",
+    in_progress: "bg-blue-500/10 text-blue-400 border-blue-500/30",
     PROCESSING: "bg-blue-500/10 text-blue-400 border-blue-500/30",
+    completed: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
     COMPLETED: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
+    cancelled: "bg-red-500/10 text-red-400 border-red-500/30",
     CANCELLED: "bg-red-500/10 text-red-400 border-red-500/30",
-    REFUNDED: "bg-purple-500/10 text-purple-400 border-purple-500/30",
+    refunded: "bg-purple-500/10 text-purple-400 border-purple-500/30",
+  };
+
+  const statusLabelMap: Record<string, string> = {
+    waiting_admin_accept: "Chờ Admin nhận đơn",
+    pending_payment: "Chờ thanh toán",
+    PENDING: "Chờ Admin nhận đơn",
+    in_progress: "Đang thực hiện",
+    PROCESSING: "Đang thực hiện",
+    completed: "Đã hoàn thành",
+    COMPLETED: "Đã hoàn thành",
+    cancelled: "Đã hủy đơn",
+    CANCELLED: "Đã hủy đơn",
+    refunded: "Đã hoàn tiền",
   };
 
   return (
@@ -181,47 +202,48 @@ export default function AdminOrderDetailPage({
           </Link>
           <span className="text-slate-600">/</span>
           <h1 className="text-xl font-bold tracking-tight text-white font-mono">
-            #{order.id}
+            #{order.orderNumber || order.id.slice(0, 8)}
           </h1>
           <Badge className={cn("border px-2.5 py-0.5 text-xs font-semibold", statusColorMap[order.status] || "bg-slate-800 text-slate-300")}>
-            {order.status}
+            {statusLabelMap[order.status] || order.status}
           </Badge>
         </div>
 
         {/* Action button status controls */}
         <div className="flex flex-wrap items-center gap-2">
-          {order.status === "PENDING" && (
+          {(order.status === "waiting_admin_accept" || order.status === "PENDING" || order.status === "pending_payment") && (
             <Button
               size="sm"
-              onClick={() => handleUpdateStatus("PROCESSING")}
+              onClick={() => handleUpdateStatus("in_progress")}
               disabled={updating}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold gap-1.5 shadow"
             >
-              {updating && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
-              Bắt đầu xử lý
+              {updating ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+              Nhận đơn cày này
             </Button>
           )}
 
-          {order.status === "PROCESSING" && (
+          {(order.status === "in_progress" || order.status === "PROCESSING") && (
             <Button
               size="sm"
-              onClick={() => handleUpdateStatus("COMPLETED")}
+              onClick={() => handleUpdateStatus("completed")}
               disabled={updating}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold gap-1.5 shadow"
             >
-              {updating && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
-              Hoàn thành đơn
+              {updating ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+              Hoàn thành đơn cày
             </Button>
           )}
 
-          {order.status !== "CANCELLED" && order.status !== "REFUNDED" && (
+          {order.status !== "completed" && order.status !== "COMPLETED" && order.status !== "cancelled" && order.status !== "CANCELLED" && order.status !== "refunded" && (
             <Button
               size="sm"
               variant="destructive"
-              onClick={() => handleUpdateStatus("CANCELLED")}
+              onClick={() => handleUpdateStatus("cancelled")}
               disabled={updating}
+              className="gap-1.5"
             >
-              Hủy đơn
+              <XCircle className="h-4 w-4" /> Hủy đơn này
             </Button>
           )}
         </div>
