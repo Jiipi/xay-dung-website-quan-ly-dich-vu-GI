@@ -38,6 +38,7 @@ export async function PUT(request: Request) {
         name: true,
         email: true,
         role: true,
+        avatarUrl: true,
       },
     });
 
