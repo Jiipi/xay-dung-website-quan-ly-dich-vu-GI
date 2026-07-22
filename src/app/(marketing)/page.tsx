@@ -207,6 +207,41 @@ async function TestimonialsSection() {
 // ===== PAGE =====
 
 export default async function LandingPage() {
+  let ordersCount = 0;
+  let customersCount = 0;
+  let rating = 5.0;
+  let satisfactionRate = 98;
+
+  try {
+    const [totalOrders, completedOrders, totalCustomers, reviewAgg] = await Promise.all([
+      db.order.count().catch(() => 0),
+      db.order.count({ where: { status: { in: ["completed", "COMPLETED"] } } }).catch(() => 0),
+      db.user.count({ where: { role: "CUSTOMER" } }).catch(() => 0),
+      db.review.aggregate({ _avg: { rating: true }, _count: true }).catch(() => ({ _avg: { rating: null }, _count: 0 })),
+    ]);
+
+    ordersCount = completedOrders > 0 ? completedOrders : totalOrders;
+    customersCount = totalCustomers;
+    rating = reviewAgg._avg.rating ? Math.round(reviewAgg._avg.rating * 10) / 10 : 5.0;
+    satisfactionRate = reviewAgg._count > 0 ? Math.min(100, Math.round((rating / 5) * 100)) : 98;
+  } catch (err) {
+    console.error("Lỗi lấy dữ liệu thống kê từ DB:", err);
+  }
+
+  const dynamicHeroStats: HeroStat[] = [
+    { value: ordersCount, suffix: ordersCount > 0 ? "+" : "", label: "Đơn hoàn thành", icon: "trending" },
+    { value: customersCount, suffix: customersCount > 0 ? "+" : "", label: "Khách hàng", icon: "users" },
+    { value: rating, decimals: 1, label: "Đánh giá", icon: "star" },
+    { value: 24, suffix: "/7", label: "Hỗ trợ", icon: "zap" },
+  ];
+
+  const dynamicBigStats: StatItem[] = [
+    { value: ordersCount, suffix: ordersCount > 0 ? "+" : "", label: "Đơn hàng đã hoàn thành", icon: "trending" },
+    { value: customersCount, suffix: customersCount > 0 ? "+" : "", label: "Khách hàng tin tưởng", icon: "users" },
+    { value: satisfactionRate, suffix: "%", label: "Tỷ lệ hài lòng", icon: "award" },
+    { value: 24, label: "Hỗ trợ trực tuyến", icon: "shield" },
+  ];
+
   return (
     <>
       <ScrollProgressBar position="top" />
@@ -217,37 +252,37 @@ export default async function LandingPage() {
         description={HERO_DESCRIPTION}
         ctaPrimary={{ label: "Khám phá Dịch vụ", href: "/services" }}
         ctaSecondary={{ label: "Xem Bảng Giá", href: "/pricing" }}
-        stats={HERO_STATS}
+        stats={dynamicHeroStats}
       />
 
-        <LogoCloud
-          title="Được tin tưởng bởi cộng đồng"
-          logos={LOGOS.map((name) => ({ name }))}
-        />
+      <LogoCloud
+        title="Được tin tưởng bởi cộng đồng"
+        logos={LOGOS.map((name) => ({ name }))}
+      />
 
-        <FeatureGrid
-          heading="Tại sao chọn Genshin77?"
-          subheading="Quy trình cày thuê chuyên nghiệp, cam kết bảo mật và trải nghiệm tuyệt đối cho game thủ."
-          features={FEATURES}
-        />
+      <FeatureGrid
+        heading="Tại sao chọn Genshin77?"
+        subheading="Quy trình cày thuê chuyên nghiệp, cam kết bảo mật và trải nghiệm tuyệt đối cho game thủ."
+        features={FEATURES}
+      />
 
-        <StatBar stats={BIG_STATS} />
+      <StatBar stats={dynamicBigStats} />
 
-        <TestimonialsSection />
+      <TestimonialsSection />
 
-        <FAQAccordion
-          heading="Câu hỏi thường gặp"
-          subheading="Giải đáp những thắc mắc phổ nhất về Genshin77"
-          items={FAQS}
-        />
+      <FAQAccordion
+        heading="Câu hỏi thường gặp"
+        subheading="Giải đáp những thắc mắc phổ nhất về Genshin77"
+        items={FAQS}
+      />
 
-        <CTASection
-          heading="Sẵn sàng trải nghiệm?"
-          description="Đăng ký ngay và nhận thưởng 10% giá trị nạp lần đầu."
-          primary={{ label: "Bắt đầu ngay", href: "/register" }}
-          secondary={{ label: "Xem dịch vụ", href: "/services" }}
-          illustration="sword"
-        />
+      <CTASection
+        heading="Sẵn sàng trải nghiệm?"
+        description="Đăng ký ngay và nhận thưởng 10% giá trị nạp lần đầu."
+        primary={{ label: "Bắt đầu ngay", href: "/register" }}
+        secondary={{ label: "Xem dịch vụ", href: "/services" }}
+        illustration="sword"
+      />
     </>
   );
 }

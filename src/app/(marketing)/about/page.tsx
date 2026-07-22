@@ -10,12 +10,7 @@ import { GradientText } from "@/components/animations/GradientText";
 import { Reveal } from "@/components/animations/Reveal";
 import { TiltCard } from "@/components/animations/TiltCard";
 
-const STATS: { value: number; suffix?: string; label: string }[] = [
-  { value: 2024, label: "Năm thành lập" },
-  { value: 1000, suffix: "+", label: "Đơn hoàn thành" },
-  { value: 500, suffix: "+", label: "Khách hàng" },
-  { value: 4.9, suffix: "/5", label: "Đánh giá" },
-];
+import { db } from "@/lib/db";
 
 export const metadata: Metadata = {
   title: "Về Genshin77",
@@ -29,7 +24,30 @@ export const metadata: Metadata = {
   },
 };
 
-export default function AboutPage() {
+export const dynamic = "force-dynamic";
+
+export default async function AboutPage() {
+  let ordersCount = 0;
+  let customersCount = 0;
+
+  try {
+    const [totalOrders, completedOrders, totalCustomers] = await Promise.all([
+      db.order.count().catch(() => 0),
+      db.order.count({ where: { status: { in: ["completed", "COMPLETED"] } } }).catch(() => 0),
+      db.user.count({ where: { role: "CUSTOMER" } }).catch(() => 0),
+    ]);
+    ordersCount = completedOrders > 0 ? completedOrders : totalOrders;
+    customersCount = totalCustomers;
+  } catch (e) {
+    console.error("Lỗi lấy stats trong AboutPage:", e);
+  }
+
+  const dynamicStats = [
+    { value: 2024, label: "Năm thành lập" },
+    { value: ordersCount, suffix: ordersCount > 0 ? "+" : "", label: "Đơn hoàn thành" },
+    { value: customersCount, suffix: customersCount > 0 ? "+" : "", label: "Khách hàng" },
+    { value: 4.9, suffix: "/5", label: "Đánh giá" },
+  ];
   return (
     <main className="relative z-[1] overflow-hidden px-4 pb-20 pt-28">
       {/* Hero */}
@@ -60,7 +78,7 @@ export default function AboutPage() {
       <section className="mx-auto mb-24 max-w-5xl">
         <Reveal>
           <div className="grid grid-cols-2 gap-y-10 rounded-3xl border border-border/50 bg-card/30 px-6 py-10 backdrop-blur-sm lg:grid-cols-4">
-            {STATS.map((s, idx) => (
+            {dynamicStats.map((s, idx) => (
               <div key={idx} className="px-4 text-center">
                 <div className="mb-2 font-heading text-4xl font-extrabold text-primary tabular-nums sm:text-5xl">
                   <GradientText>
