@@ -29,7 +29,8 @@ export async function GET() {
     const formattedServices = services.map((s) => ({
       id: s.id,
       name: s.name,
-      category: s.category,
+      category: s.categoryId || (typeof s.category === "object" && s.category ? s.category.id : String(s.category || "")),
+      categoryName: typeof s.category === "object" && s.category ? s.category.name : String(s.category || ""),
       description: s.description || "",
       imageUrl: s.imageUrl || "",
       isActive: s.isActive,

@@ -31,7 +31,8 @@ interface PriceOption {
 interface ServiceData {
   id: string;
   name: string;
-  category: string;
+  category: string | { id: string; name: string; icon?: string };
+  categoryName?: string;
   description: string;
   imageUrl: string;
   isActive: boolean;
@@ -108,7 +109,8 @@ export default function AdminServicesCRUDPage() {
     setEditingService(svc);
     setFormName(svc.name);
     setFormDesc(svc.description || "");
-    setFormCat(svc.category);
+    const catVal = typeof svc.category === "object" && svc.category ? svc.category.id : String(svc.category || "la-hoan");
+    setFormCat(catVal);
     setFormPrice(svc.priceOptions[0]?.price || 0);
     setDialogOpen(true);
   };
@@ -228,7 +230,7 @@ export default function AdminServicesCRUDPage() {
                       </TableCell>
                       <TableCell>
                         <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700 uppercase">
-                          {SERVICE_CATEGORIES.find(c => c.id === s.category)?.name || s.category}
+                          {s.categoryName || (typeof s.category === "object" && s.category ? (s.category as any).name : SERVICE_CATEGORIES.find(c => c.id === s.category)?.name || String(s.category || ""))}
                         </span>
                       </TableCell>
                       <TableCell className="text-xs text-slate-400">
