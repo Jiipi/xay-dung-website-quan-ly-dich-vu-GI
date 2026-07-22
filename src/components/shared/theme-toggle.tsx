@@ -5,34 +5,34 @@ import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 
-export function ThemeToggle() {
-  const { setTheme, resolvedTheme } = useTheme();
+export function ThemeToggle({ className }: { className?: string }) {
+  const { setTheme, theme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = React.useState(false);
 
-  // Chỉ render trạng thái theme sau khi mount ở client để tránh hydration mismatch
-  // (mẫu chuẩn của next-themes). setState 1 lần khi mount là cần thiết ở đây.
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   React.useEffect(() => setMounted(true), []);
 
   if (!mounted) {
     return (
-      <Button variant="ghost" size="icon" className="h-9 w-9">
+      <Button variant="ghost" size="icon" className={`h-9 w-9 ${className || ""}`}>
         <Sun className="h-4 w-4" />
       </Button>
     );
   }
 
+  const isDark = resolvedTheme === "dark" || theme === "dark";
+
   return (
     <Button
       variant="ghost"
       size="icon"
-      className="h-9 w-9"
-      onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+      className={`h-9 w-9 ${className || ""}`}
+      onClick={() => setTheme(isDark ? "light" : "dark")}
+      title={isDark ? "Chuyển sang chế độ sáng" : "Chuyển sang chế độ tối"}
     >
-      {resolvedTheme === "dark" ? (
-        <Sun className="h-4 w-4 transition-transform hover:rotate-45" />
+      {isDark ? (
+        <Sun className="h-4 w-4 text-amber-400 transition-transform hover:rotate-45" />
       ) : (
-        <Moon className="h-4 w-4 transition-transform hover:-rotate-12" />
+        <Moon className="h-4 w-4 text-slate-700 transition-transform hover:-rotate-12" />
       )}
       <span className="sr-only">Toggle theme</span>
     </Button>
