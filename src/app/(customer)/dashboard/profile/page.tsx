@@ -1,19 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
-import { User, Shield, KeyRound, Loader2, Save } from "lucide-react";
+import { User, Shield, KeyRound, Loader2, Save, Camera, Upload, Trash2 } from "lucide-react";
 
 export default function CustomerProfilePage() {
   const [profileName, setProfileName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [customUrlInput, setCustomUrlInput] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
 
@@ -41,6 +44,42 @@ export default function CustomerProfilePage() {
     };
     fetchProfile();
   }, []);
+
+  const handleSaveAvatar = async (url: string | null) => {
+    setAvatarUrl(url);
+    try {
+      const res = await fetch("/api/user/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ avatarUrl: url }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(url ? "Đã cập nhật ảnh đại diện mới!" : "Đã gỡ ảnh đại diện!");
+      } else {
+        toast.error(data.error || "Không thể cập nhật ảnh");
+      }
+    } catch {
+      toast.error("Lỗi kết nối khi lưu ảnh đại diện");
+    }
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Dung lượng ảnh tối đa 5MB");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64Url = reader.result as string;
+      handleSaveAvatar(base64Url);
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,23 +110,6 @@ export default function CustomerProfilePage() {
       toast.error("Lỗi kết nối máy chủ");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleSelectAvatar = async (url: string) => {
-    setAvatarUrl(url);
-    try {
-      const res = await fetch("/api/user/profile", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ avatarUrl: url }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        toast.success("Đã cập nhật ảnh đại diện mới!");
-      }
-    } catch {
-      toast.error("Lỗi cập nhật ảnh đại diện");
     }
   };
 
@@ -133,15 +155,6 @@ export default function CustomerProfilePage() {
     }
   };
 
-  const AVATAR_PRESETS = [
-    { label: "Raiden Shogun", url: "https://images.unsplash.com/photo-1578632767115-351597cf2477?w=150&auto=format&fit=crop&q=80" },
-    { label: "Zhongli", url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150&auto=format&fit=crop&q=80" },
-    { label: "Furina", url: "https://images.unsplash.com/photo-1563089145-599997674d42?w=150&auto=format&fit=crop&q=80" },
-    { label: "Nahida", url: "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=150&auto=format&fit=crop&q=80" },
-    { label: "Hu Tao", url: "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=150&auto=format&fit=crop&q=80" },
-    { label: "Kazuha", url: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=150&auto=format&fit=crop&q=80" },
-  ];
-
   if (pageLoading) {
     return (
       <div className="h-[50vh] flex items-center justify-center">
@@ -156,7 +169,7 @@ export default function CustomerProfilePage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Hồ sơ cá nhân</h1>
         <p className="text-muted-foreground text-sm">
-          Quản lý thông tin tài khoản web của bạn, ảnh đại diện và thay đổi mật khẩu đăng nhập.
+          Quản lý thông tin tài khoản web của bạn, ảnh đại diện tùy chỉnh và thay đổi mật khẩu đăng nhập.
         </p>
       </div>
 
@@ -165,8 +178,12 @@ export default function CustomerProfilePage() {
         <div className="md:col-span-1 space-y-6">
           <Card className="border-border/50 text-center">
             <CardContent className="p-6 flex flex-col items-center">
-              <div className="relative group mb-3">
-                <Avatar className="h-24 w-24 border-2 border-primary/20 shadow-md">
+              <div
+                className="relative group mb-3 cursor-pointer"
+                onClick={() => fileInputRef.current?.click()}
+                title="Bấm để tải ảnh đại diện từ máy tính"
+              >
+                <Avatar className="h-24 w-24 border-2 border-primary/20 shadow-md transition-opacity group-hover:opacity-85">
                   {avatarUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={avatarUrl} alt={profileName} className="h-full w-full object-cover" />
@@ -176,31 +193,75 @@ export default function CustomerProfilePage() {
                     </AvatarFallback>
                   )}
                 </Avatar>
+                <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Camera className="h-6 w-6 text-white" />
+                </div>
               </div>
+
+              <input
+                type="file"
+                ref={fileInputRef}
+                accept="image/*"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+
               <h3 className="font-bold text-lg">{profileName}</h3>
               <p className="text-xs text-muted-foreground mt-1">{email}</p>
 
-              {/* Select Avatar Preset */}
-              <div className="mt-5 w-full space-y-2 border-t pt-4 border-border/50">
-                <Label className="text-xs font-semibold text-muted-foreground block text-left">
-                  Chọn ảnh đại diện Avatar:
+              {/* Tải ảnh tùy chỉnh hoặc Dán URL */}
+              <div className="mt-5 w-full space-y-3 border-t pt-4 border-border/50 text-left">
+                <Label className="text-xs font-semibold text-muted-foreground block">
+                  Đổi ảnh đại diện tùy thích:
                 </Label>
-                <div className="grid grid-cols-3 gap-2">
-                  {AVATAR_PRESETS.map((item, idx) => (
-                    <button
-                      key={idx}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="w-full gap-2 text-xs"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Upload className="h-3.5 w-3.5 text-primary" /> Tải ảnh từ máy tính
+                </Button>
+
+                <div className="space-y-1.5 pt-1">
+                  <Label className="text-[11px] text-muted-foreground">Hoặc dán đường dẫn URL ảnh:</Label>
+                  <div className="flex gap-1.5">
+                    <Input
+                      placeholder="https://..."
+                      value={customUrlInput}
+                      onChange={(e) => setCustomUrlInput(e.target.value)}
+                      className="text-xs h-8 bg-background border-border/80"
+                    />
+                    <Button
                       type="button"
-                      onClick={() => handleSelectAvatar(item.url)}
-                      className={`relative rounded-lg overflow-hidden border-2 aspect-square transition-all hover:scale-105 ${
-                        avatarUrl === item.url ? "border-amber-500 ring-2 ring-amber-500/30" : "border-border/60 hover:border-primary"
-                      }`}
-                      title={item.label}
+                      size="sm"
+                      className="h-8 text-xs px-2.5"
+                      onClick={() => {
+                        if (!customUrlInput.trim()) {
+                          toast.error("Vui lòng nhập đường dẫn URL ảnh");
+                          return;
+                        }
+                        handleSaveAvatar(customUrlInput.trim());
+                        setCustomUrlInput("");
+                      }}
                     >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={item.url} alt={item.label} className="h-full w-full object-cover" />
-                    </button>
-                  ))}
+                      Áp dụng
+                    </Button>
+                  </div>
                 </div>
+
+                {avatarUrl && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="w-full gap-1.5 text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-500/10"
+                    onClick={() => handleSaveAvatar(null)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" /> Gỡ ảnh hiện tại
+                  </Button>
+                )}
               </div>
 
               <div className="mt-5 flex flex-col gap-2 w-full border-t pt-3 border-border/50">

@@ -19,18 +19,41 @@ export async function GET() {
 
     const transactions = await db.walletTransaction.findMany({
       where: { userId: payload.userId },
+      include: {
+        order: {
+          select: { status: true, orderNumber: true },
+        },
+      },
       orderBy: { createdAt: "desc" },
     });
 
-    const formattedTxs = transactions.map((t) => ({
-      id: t.id,
-      type: t.type,
-      amount: t.amount,
-      balance: t.balance,
-      description: t.description,
-      status: t.status,
-      createdAt: t.createdAt.toISOString(),
-    }));
+    const formattedTxs = transactions.map((t) => {
+      const isCompletedOrder =
+        t.order && (t.order.status === "completed" || t.order.status === "COMPLETED");
+      const isCancelledOrder =
+        t.order && (t.order.status === "cancelled" || t.order.status === "CANCELLED");
+
+      let displayType = t.type;
+      let displayDesc = t.description;
+
+      if (displayType === "hold" && isCompletedOrder) {
+        displayType = "charge";
+        displayDesc = `Thanh toán cho đơn hàng ${t.order?.orderNumber} (Đã hoàn thành)`;
+      } else if (displayType === "hold" && isCancelledOrder) {
+        displayType = "refund";
+        displayDesc = `Hoàn trả tạm giữ cho đơn hàng ${t.order?.orderNumber} (Đã hủy)`;
+      }
+
+      return {
+        id: t.id,
+        type: displayType,
+        amount: t.amount,
+        balance: t.balance,
+        description: displayDesc,
+        status: t.status,
+        createdAt: t.createdAt.toISOString(),
+      };
+    });
 
     return NextResponse.json({
       success: true,
