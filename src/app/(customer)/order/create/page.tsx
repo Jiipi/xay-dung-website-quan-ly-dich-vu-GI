@@ -370,7 +370,7 @@ function OrderWizardContent() {
                         <Textarea
                           id="wiz-note"
                           placeholder={
-                            selectedService.name.toLowerCase().includes("roll")
+                            selectedService?.name?.toLowerCase().includes("roll")
                               ? "Ví dụ: Roll Banner Nhân vật Raiden Shogun hoặc Vũ khí Trảm Ma Tối Cường..."
                               : "Nhập tên nhân vật, vũ khí, đội hình hoặc lưu ý đặc biệt dành cho Booster..."
                           }
