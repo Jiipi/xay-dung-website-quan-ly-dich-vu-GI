@@ -114,9 +114,6 @@ export default function CustomerDepositPage() {
 
       if (data.success) {
         const intent = data.paymentIntent;
-        // Sinh link QR thật từ VietQR
-        const qrUrl = `https://api.vietqr.io/image/970436-1023456789-Q4F9lM5.jpg?amount=${intent.amount}&addInfo=${intent.content}&accountName=${encodeURIComponent(intent.accountName)}`;
-        
         setQrDetails({
           id: intent.id,
           bankName: intent.bankName,
@@ -124,7 +121,7 @@ export default function CustomerDepositPage() {
           accountName: intent.accountName,
           content: intent.content,
           amount: intent.amount,
-          qrUrl: intent.qrCodeUrl || qrUrl,
+          qrUrl: intent.qrCodeUrl,
           checkoutUrl: intent.checkoutUrl,
         });
         toast.success("Tạo mã VietQR nạp tiền thành công!");

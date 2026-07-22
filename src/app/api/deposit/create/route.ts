@@ -84,11 +84,12 @@ export async function POST(request: Request) {
 
     // Gọi payOS SDK tạo Payment Link (Nếu có cấu hình)
     let paymentLinkData;
+    const cleanBankId = bankInfo.bankName ? bankInfo.bankName.toLowerCase().replace(/[^a-z0-9]/g, "") : "vietcombank";
     const vietQRUrl = generateVietQRUrl({
       amount: Number(amount),
       paymentCode: description,
       bankConfig: {
-        bankId: "seabank",
+        bankId: cleanBankId,
         accountNo: bankInfo.accountNumber,
         accountName: bankInfo.accountName,
       },
@@ -108,6 +109,16 @@ export async function POST(request: Request) {
       console.warn("payOS chưa cấu hình hoặc báo lỗi, chuyển sang mã VietQR chuẩn:", payosError);
     }
 
+    let finalQrUrl = vietQRUrl;
+    if (paymentLinkData?.qrCode) {
+      if (paymentLinkData.qrCode.startsWith("http")) {
+        finalQrUrl = paymentLinkData.qrCode;
+      } else {
+        // PayOS trả về chuỗi EMVCo (0002010...) -> Chuyển thành link ảnh QR hiển thị
+        finalQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(paymentLinkData.qrCode)}`;
+      }
+    }
+
     // Lưu PaymentIntent vào database ở trạng thái pending
     const paymentIntent = await db.paymentIntent.create({
       data: {
@@ -115,7 +126,7 @@ export async function POST(request: Request) {
         amount: Number(amount),
         status: "pending",
         paymentCode,
-        qrCodeUrl: paymentLinkData?.qrCode || vietQRUrl,
+        qrCodeUrl: finalQrUrl,
         bankName: bankInfo.bankName,
         accountNumber: bankInfo.accountNumber,
         accountName: bankInfo.accountName,
@@ -128,6 +139,7 @@ export async function POST(request: Request) {
       success: true,
       paymentIntent: {
         ...paymentIntent,
+        qrCodeUrl: finalQrUrl,
         checkoutUrl: paymentLinkData?.checkoutUrl || null,
       },
     });

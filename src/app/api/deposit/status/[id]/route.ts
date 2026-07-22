@@ -1,36 +1,22 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { verifyToken } from "@/lib/jwt";
 import { db } from "@/lib/db";
 import { payOS } from "@/lib/payos";
-import { isRateLimited } from "@/lib/rate-limit";
-import { isBlockedCrossSite } from "@/lib/csrf";
+import { getBalanceInTx } from "@/modules/wallet/balance";
 
-export async function POST(request: Request) {
+export async function GET(
+  request: Request,
+  props: { params: Promise<{ id: string }> }
+) {
   try {
-    if (isBlockedCrossSite(request)) {
-      return NextResponse.json(
-        { error: "Yêu cầu bị từ chối (nguồn không hợp lệ)" },
-        { status: 403 }
-      );
-    }
-
-    const ip = request.headers.get("x-forwarded-for")?.split(",")[0] || "127.0.0.1";
-    
-    // Giới hạn 5 lần tạo mã nạp tiền trong 10 phút từ cùng 1 IP
-    if (isRateLimited(ip, 5, 10 * 60 * 1000)) {
-      return NextResponse.json(
-        { error: "Bạn đã tạo quá nhiều yêu cầu nạp tiền. Vui lòng đợi 10 phút." },
-        { status: 429 }
-      );
-    }
-
+    const { id } = await props.params;
     const cookieStore = await cookies();
     const token = cookieStore.get("token")?.value;
 
     if (!token) {
       return NextResponse.json(
-        { error: "Bạn cần đăng nhập để thực hiện nạp tiền" },
+        { error: "Bạn cần đăng nhập để thực hiện thao tác này" },
         { status: 401 }
       );
     }
@@ -38,94 +24,74 @@ export async function POST(request: Request) {
     const payload = await verifyToken(token);
     if (!payload) {
       return NextResponse.json(
-        { error: "Phiên đăng nhập hết hạn hoặc không hợp lệ" },
+        { error: "Phiên đăng nhập hết hạn" },
         { status: 401 }
       );
     }
 
-    const { amount } = await request.json();
+    const paymentIntent = await db.paymentIntent.findFirst({
+      where: {
+        id,
+        userId: payload.userId,
+      },
+    });
 
-    if (!amount || amount < 10000) {
+    if (!paymentIntent) {
       return NextResponse.json(
-        { error: "Số tiền nạp tối thiểu là 10.000đ" },
-        { status: 400 }
+        { error: "Không tìm thấy yêu cầu nạp tiền" },
+        { status: 404 }
       );
     }
 
-    const userId = payload.userId;
-
-    // Sinh mã thanh toán ngẫu nhiên (Số nguyên dương cho payOS orderCode)
-    const orderCode = Number(String(Date.now()).slice(-6) + String(Math.floor(100 + Math.random() * 900)));
-    const paymentCode = `NAP-${userId.slice(-4).toUpperCase()}-${orderCode}`;
-
-    // Khởi tạo thông tin ngân hàng thụ hưởng (Từ config của Admin)
-    const bankConfig = await db.systemSetting.findFirst({
-      where: { key: "bank_config" },
-    });
-
-    let bankInfo = {
-      bankName: "Vietcombank",
-      accountNumber: "1023456789",
-      accountName: "Genshin77 ADMIN",
-    };
-
-    if (bankConfig) {
+    // Nếu đang pending và có kết nối PayOS -> Thử check status trên PayOS SDK phòng trường hợp webhook chưa tới
+    if (
+      paymentIntent.status === "pending" &&
+      process.env.PAYOS_CLIENT_ID &&
+      process.env.PAYOS_CLIENT_ID !== "YOUR_PAYOS_CLIENT_ID"
+    ) {
       try {
-        bankInfo = JSON.parse(bankConfig.value);
-      } catch (e) {
-        console.error("Lỗi parse cấu hình ngân hàng trong DB:", e);
+        const match = paymentIntent.content.match(/\d+/);
+        if (match) {
+          const orderCode = Number(match[0]);
+          const payosOrder = await payOS.paymentRequests.get(orderCode);
+          if (payosOrder && payosOrder.status === "PAID") {
+            await db.$transaction(async (tx) => {
+              await tx.paymentIntent.update({
+                where: { id: paymentIntent.id },
+                data: { status: "completed" },
+              });
+
+              const previousBalance = await getBalanceInTx(tx, payload.userId);
+
+              await tx.walletTransaction.create({
+                data: {
+                  userId: payload.userId,
+                  type: "deposit",
+                  amount: paymentIntent.amount,
+                  balance: previousBalance + paymentIntent.amount,
+                  description: `Nạp tiền qua PayOS (Đơn #${orderCode})`,
+                  status: "success",
+                },
+              });
+
+              paymentIntent.status = "completed";
+            });
+          }
+        }
+      } catch (payosErr) {
+        console.warn("[deposit/status] PayOS get status error:", payosErr);
       }
     }
 
-    const description = `Genshin77 ${orderCode}`;
-    const returnUrl = `${process.env.NEXTAUTH_URL}/dashboard/wallet`;
-    const cancelUrl = `${process.env.NEXTAUTH_URL}/dashboard/deposit`;
-
-    // Gọi payOS SDK tạo Payment Link
-    let paymentLinkData;
-    try {
-      paymentLinkData = await payOS.paymentRequests.create({
-        orderCode,
-        amount: Number(amount),
-        description: description.slice(0, 25), // payOS giới hạn mô tả 25 ký tự
-        returnUrl,
-        cancelUrl,
-      });
-    } catch (payosError) {
-      console.error("Lỗi khi gọi API payOS SDK:", payosError);
-      return NextResponse.json(
-        { error: "Không thể kết nối với cổng thanh toán payOS lúc này" },
-        { status: 502 }
-      );
-    }
-
-    // Lưu PaymentIntent vào database ở trạng thái pending
-    const paymentIntent = await db.paymentIntent.create({
-      data: {
-        userId,
-        amount: Number(amount),
-        status: "pending",
-        paymentCode,
-        qrCodeUrl: paymentLinkData.qrCode,
-        bankName: bankInfo.bankName,
-        accountNumber: bankInfo.accountNumber,
-        accountName: bankInfo.accountName,
-        content: description,
-        expiresAt: new Date(Date.now() + 15 * 60 * 1000), // Hết hạn sau 15 phút
-      },
-    });
-
     return NextResponse.json({
       success: true,
-      paymentIntent: {
-        ...paymentIntent,
-        checkoutUrl: paymentLinkData.checkoutUrl,
-      },
+      status: paymentIntent.status,
+      amount: paymentIntent.amount,
     });
   } catch (error) {
-    console.error("Lỗi API tạo link nạp tiền:", error);
+    console.error("Lỗi GET /api/deposit/status/[id]:", error);
     return NextResponse.json(
-      { error: "Có lỗi xảy ra khi khởi tạo thanh toán" },
+      { error: "Lỗi hệ thống khi kiểm tra trạng thái" },
       { status: 500 }
     );
   }
