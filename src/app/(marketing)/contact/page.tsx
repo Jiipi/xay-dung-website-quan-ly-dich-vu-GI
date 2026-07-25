@@ -1,4 +1,4 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -142,7 +142,7 @@ export default function ContactPage() {
                   Gửi tin nhắn cho chúng tôi
                 </h2>
                 <p className="text-sm text-muted-foreground mb-6">
-                  Điền form — email sẽ được mở sẵn trong ứng dụng mail của bạn.
+                  Điền form — chúng tôi sẽ nhận tin nhắn và phản hồi qua email trong vòng 24 giờ làm việc.
                 </p>
                 <ContactForm supportEmail={SUPPORT_EMAIL} />
               </CardContent>

@@ -46,7 +46,7 @@ export function ContactForm({ supportEmail }: { supportEmail: string }) {
     return null;
   };
 
-  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const err = validate();
     if (err) {
@@ -57,28 +57,33 @@ export function ContactForm({ supportEmail }: { supportEmail: string }) {
     setStatus("submitting");
     setErrorMsg(null);
 
-    // Tránh xung đột khi user chưa cài mail client: tạo mailto URL và alert fallback.
-    const mailto = `mailto:${encodeURIComponent(supportEmail)}?subject=${encodeURIComponent(
-      `[${form.subject.trim()}] ${form.name.trim()}`
-    )}&body=${encodeURIComponent(
-      `Họ tên: ${form.name.trim()}\nEmail: ${form.email.trim()}\n\n${form.message.trim()}`
-    )}`;
-
     try {
-      window.location.href = mailto;
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: form.name.trim(),
+          email: form.email.trim(),
+          subject: form.subject.trim(),
+          message: form.message.trim(),
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setStatus("error");
+        setErrorMsg(data.error || "Gửi tin nhắn thất bại. Vui lòng thử lại.");
+        return;
+      }
+
       setStatus("sent");
       setForm(initialState);
     } catch {
-      // Fallback nếu trình duyệt chặn mailto
-      alert(
-        `Vui lòng gửi email trực tiếp đến ${supportEmail}\n\n` +
-          `Họ tên: ${form.name}\n` +
-          `Email: ${form.email}\n` +
-          `Chủ đề: ${form.subject}\n\n` +
-          `${form.message}`
-      );
-      setStatus("sent");
-      setForm(initialState);
+      setStatus("error");
+      setErrorMsg("Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng.");
     }
   };
 
@@ -153,8 +158,7 @@ export function ContactForm({ supportEmail }: { supportEmail: string }) {
         >
           <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0" />
           <span>
-            Đã chuẩn bị email gửi đến {supportEmail}. Vui lòng xác nhận trong
-            ứng dụng email của bạn.
+            Cảm ơn bạn! Tin nhắn của bạn đã được gửi thành công đến đội ngũ hỗ trợ. Chúng tôi sẽ phản hồi trong vòng 24 giờ.
           </span>
         </div>
       )}
