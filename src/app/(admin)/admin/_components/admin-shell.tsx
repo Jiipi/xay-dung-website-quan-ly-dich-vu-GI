@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { ADMIN_NAV } from "@/lib/constants";
 import { logger } from "@/lib/logger";
+import { LogoIcon } from "@/components/shared/logo";
 
 const adminIconMap: Record<string, React.ElementType> = {
   LayoutDashboard,
@@ -68,9 +69,7 @@ function AdminSidebarContent({
       {/* Brand */}
       <div className="p-4 border-b border-slate-800">
         <Link href="/admin" className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-500">
-            <Flame className="w-5 h-5" />
-          </div>
+          <LogoIcon className="w-8 h-8" />
           {!collapsed && (
             <div className="flex flex-col">
               <span className="font-extrabold text-base tracking-tight text-white">

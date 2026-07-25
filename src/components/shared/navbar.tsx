@@ -29,6 +29,7 @@ import {
   Shield,
 } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
+import { Logo } from "@/components/shared/logo";
 import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/lib/constants";
 
@@ -127,15 +128,7 @@ export function Navbar() {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 lg:h-20">
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="relative">
-              <Flame className="h-8 w-8 text-amber-500 transition-transform group-hover:scale-110" />
-              <div className="absolute inset-0 bg-amber-500/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
-            <span className="text-xl font-bold tracking-tight">
-              Genshin<span className="text-amber-500">77</span>
-            </span>
-          </Link>
+          <Logo />
 
           <nav className="hidden md:flex items-center gap-1">
             {navLinks.map((link) => (

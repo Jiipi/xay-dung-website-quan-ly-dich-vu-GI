@@ -6,11 +6,10 @@ import {
   Home,
   Mail,
   Search,
-  Flame,
-} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { LogoIcon } from "@/components/shared/logo";
 
 export const metadata: Metadata = {
   title: "Không tìm thấy trang",
@@ -72,7 +71,9 @@ export default function NotFound() {
           </span>
         </h1>
 
-        <Flame className="h-12 w-12 text-amber-400 mx-auto mb-4" />
+        <div className="flex justify-center mb-4">
+          <LogoIcon className="h-12 w-12" />
+        </div>
 
         <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4">
           Trang này đã lạc vào Teyvat

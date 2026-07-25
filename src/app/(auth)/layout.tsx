@@ -1,5 +1,4 @@
-import { Flame } from "lucide-react";
-import Link from "next/link";
+import { Logo } from "@/components/shared/logo";
 
 export default function AuthLayout({
   children,
@@ -20,12 +19,9 @@ export default function AuthLayout({
         <div className="absolute bottom-1/4 -left-20 w-80 h-80 bg-amber-500/15 rounded-full blur-[100px] pointer-events-none" />
 
         <div className="relative z-10 text-center px-12">
-          <Link href="/" className="inline-flex items-center gap-3 mb-8">
-            <Flame className="h-12 w-12 text-amber-400" />
-            <span className="text-4xl font-extrabold text-white">
-              Genshin<span className="text-amber-400">77</span>
-            </span>
-          </Link>
+          <div className="mb-8 flex justify-center">
+            <Logo iconClassName="h-12 w-12" textClassName="text-4xl" />
+          </div>
           <p className="text-lg text-blue-100/70 max-w-sm mx-auto leading-relaxed">
             Nền tảng dịch vụ Genshin Impact chuyên nghiệp, bảo mật và minh bạch.
           </p>

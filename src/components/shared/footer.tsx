@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Flame } from "lucide-react";
+import { Logo } from "@/components/shared/logo";
 import { Separator } from "@/components/ui/separator";
 
 const footerLinks = {
@@ -28,12 +28,9 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
           {/* Brand */}
           <div className="lg:col-span-1">
-            <Link href="/" className="flex items-center gap-2 mb-4">
-              <Flame className="h-7 w-7 text-amber-500" />
-              <span className="text-lg font-bold text-white">
-                Genshin<span className="text-amber-500">77</span>
-              </span>
-            </Link>
+            <div className="mb-4">
+              <Logo iconClassName="h-7 w-7" textClassName="text-lg" />
+            </div>
             <p className="text-sm text-white/60 leading-relaxed mb-4">
               Nền tảng dịch vụ Genshin Impact chuyên nghiệp, uy tín và bảo mật.
               Đồng hành cùng bạn chinh phục Teyvat.

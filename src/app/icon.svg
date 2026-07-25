@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <defs>
+    <linearGradient id="g77-flame" x1="50" y1="8" x2="50" y2="92" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FBBF24" />
+      <stop offset="45%" stop-color="#F59E0B" />
+      <stop offset="85%" stop-color="#EF4444" />
+      <stop offset="100%" stop-color="#B91C1C" />
+    </linearGradient>
+    <linearGradient id="g77-inner" x1="50" y1="28" x2="50" y2="80" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FEF08A" />
+      <stop offset="60%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#EA580C" />
+    </linearGradient>
+    <linearGradient id="g77-ring" x1="10" y1="10" x2="90" y2="90" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#F59E0B" stroke-opacity="0.9" />
+      <stop offset="50%" stop-color="#3B82F6" stroke-opacity="0.8" />
+      <stop offset="100%" stop-color="#1D4ED8" stroke-opacity="0.9" />
+    </linearGradient>
+  </defs>
+
+  <!-- Outer Sharp Primogem Diamond Crest -->
+  <polygon points="50,4 96,50 50,96 4,50" fill="#0F172A" stroke="url(#g77-ring)" stroke-width="5" stroke-linejoin="round" />
+
+  <!-- Main Flame Body -->
+  <path d="M50 14 C58 26, 78 40, 78 62 C78 76.5, 65.5 88, 50 88 C34.5 88, 22 76.5, 22 62 C22 40, 42 26, 50 14 Z" fill="url(#g77-flame)" />
+
+  <!-- Inner Bright Core -->
+  <path d="M50 32 C55 41, 65 50, 65 65 C65 73.2, 58.2 80, 50 80 C41.8 80, 35 73.2, 35 65 C35 50, 45 41, 50 32 Z" fill="url(#g77-inner)" />
+
+  <!-- Center Vision Star Dot -->
+  <circle cx="50" cy="63" r="4.5" fill="#FFFFFF" opacity="0.95" />
+  <path d="M50 20 L54 36 L46 36 Z" fill="#FFFFFF" opacity="0.9" />
+</svg>
