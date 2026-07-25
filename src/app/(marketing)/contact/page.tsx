@@ -18,17 +18,16 @@ import {
 import { MarketingPageShell } from "@/components/marketing/MarketingPageShell";
 import { Reveal } from "@/components/animations/Reveal";
 
-const SUPPORT_EMAIL = "support@Genshin77.vn";
-const ZALO_NUMBER = "+84 909 123 456";
-const DISCORD = "Genshin77";
+const SUPPORT_EMAIL = "ngochungtran.aity@gmail.com";
+const ZALO_NUMBER = "0937265501";
 
 export const metadata: Metadata = {
   title: "Liên hệ",
   description:
-    "Liên hệ với Genshin77 qua email, Zalo, Telegram hoặc Discord. Hỗ trợ 24/7, phản hồi trong vòng 24 giờ.",
+    "Liên hệ với Genshin77 qua email hoặc Zalo. Hỗ trợ 24/7, phản hồi nhanh chóng.",
   openGraph: {
     title: "Liên hệ Genshin77",
-    description: "Liên hệ với chúng tôi qua email, Zalo, Telegram, Discord.",
+    description: "Liên hệ với chúng tôi qua email hoặc Zalo.",
     type: "website",
     locale: "vi_VN",
   },
@@ -62,15 +61,6 @@ const CHANNELS: ChannelDef[] = [
     href: `https://zalo.me/${ZALO_NUMBER.replace(/\s/g, "")}`,
     color: "text-emerald-500",
     bg: "bg-emerald-500/10",
-  },
-  {
-    iconName: "discord",
-    title: "Discord",
-    value: DISCORD,
-    desc: `Server: ${DISCORD}`,
-    href: `https://discord.gg/${DISCORD}`,
-    color: "text-indigo-500",
-    bg: "bg-indigo-500/10",
   },
 ];
 

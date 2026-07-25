@@ -1,4 +1,4 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import { ShieldCheck } from "lucide-react";
 
 import { MarketingPageShell } from "@/components/marketing/MarketingPageShell";
@@ -37,7 +37,7 @@ const SECTIONS = [
   },
   {
     title: "5. Liên hệ",
-    body: "Nếu có câu hỏi về chính sách bảo mật, vui lòng liên hệ: support@Genshin77.vn",
+    body: "Nếu có câu hỏi về chính sách bảo mật, vui lòng liên hệ: ngochungtran.aity@gmail.com",
   },
 ];
 
