@@ -104,9 +104,9 @@ const LogoMark = ({ logo }: { logo: LogoItem }) => {
     return (
       <div
         className={cn(
-          "flex h-14 min-w-[170px] items-center gap-3 rounded-xl border border-white/10 bg-card/60 px-4 py-2",
+          "flex h-12 min-w-[150px] items-center gap-3 rounded-xl border border-white/10 bg-card/60 px-4 py-2",
           "backdrop-blur-md transition-all duration-300",
-          "hover:scale-105 hover:border-white/25 hover:bg-card/90 hover:shadow-xl"
+          "hover:scale-105 hover:border-white/30 hover:bg-card/90 hover:shadow-xl"
         )}
         style={{
           boxShadow: "0 4px 16px -2px rgba(0,0,0,0.4)",
@@ -120,22 +120,12 @@ const LogoMark = ({ logo }: { logo: LogoItem }) => {
             alt={found.label}
             width={32}
             height={32}
-            className="size-8 object-contain transition-transform duration-300 hover:scale-110 drop-shadow-md"
+            className="size-8 object-contain transition-transform duration-300 hover:scale-110 drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]"
           />
         </div>
-        <div className="flex flex-col text-left">
-          <span className="text-xs font-bold tracking-wider text-foreground/90 font-mono">
-            {found.label}
-          </span>
-          {found.element && (
-            <span
-              className="text-[10px] font-semibold tracking-wide opacity-90"
-              style={{ color: found.color }}
-            >
-              {found.element}
-            </span>
-          )}
-        </div>
+        <span className="text-xs font-bold tracking-wider text-foreground/90 font-mono">
+          {found.label}
+        </span>
       </div>
     );
   }
@@ -145,7 +135,7 @@ const LogoMark = ({ logo }: { logo: LogoItem }) => {
   return (
     <div
       className={cn(
-        "flex h-14 w-44 items-center justify-center gap-2 rounded-xl border border-border/50 bg-card/40 px-4 py-2",
+        "flex h-12 w-44 items-center justify-center gap-2 rounded-xl border border-border/50 bg-card/40 px-4 py-2",
         "backdrop-blur-sm transition-all",
         "hover:border-brand-blue/40 dark:hover:border-brand-amber/40"
       )}
@@ -215,7 +205,7 @@ export function LogoCloud({
           <Marquee
             speed={speed}
             pauseOnHover={pauseOnHover}
-            className="grayscale transition-all hover:grayscale-0"
+            className="transition-all"
           >
             {firstRow.map((logo) => (
               <LogoMark key={`row1-${logo.name}`} logo={logo} />
@@ -231,7 +221,7 @@ export function LogoCloud({
                 speed={speed}
                 pauseOnHover={pauseOnHover}
                 direction="right"
-                className="grayscale transition-all hover:grayscale-0"
+                className="transition-all"
               >
                 {secondRow.map((logo) => (
                   <LogoMark key={`row2-${logo.name}`} logo={logo} />
