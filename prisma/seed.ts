@@ -403,7 +403,7 @@ async function main() {
       orderNumber: "GF-2026-0002",
       userId: "user-1",
       serviceId: "svc-5",
-      priceOptionId: "opt-5a",
+      priceOptionId: "opt-5-7d",
       amount: 80000,
       status: "completed",
       uid: "812345678",

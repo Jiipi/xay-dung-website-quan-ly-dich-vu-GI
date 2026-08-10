@@ -28,14 +28,17 @@ const HERO_STATS: HeroStat[] = [
 ];
 
 const LOGOS = [
-  "HOYOVERSE",
-  "GENSHIN",
-  "STARRAIL",
-  "TEYVAT",
   "MONDSTADT",
   "LIYUE",
   "INAZUMA",
+  "SUMERU",
+  "FONTAINE",
+  "NATLAN",
   "SNEZHNAYA",
+  "GENSHIN",
+  "HOYOVERSE",
+  "STARRAIL",
+  "TEYVAT",
 ];
 
 const FEATURES = [
